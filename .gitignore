@@ -1,0 +1,7 @@
+# Loại bỏ thư mục build và output
+**/bin/
+**/obj/
+
+# Loại bỏ thư mục hệ thống của Git và Visual Studio
+.git/
+.vs/
