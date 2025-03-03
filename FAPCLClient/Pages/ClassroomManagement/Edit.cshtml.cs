@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using BookClassRoom.Models;
 using BookClassRoom.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using FAPCL.Model;
 
 namespace BookClassRoom.Pages.ClassroomManagement
 {

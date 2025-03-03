@@ -5,18 +5,18 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using BookClassRoom.Models;
 using Microsoft.EntityFrameworkCore;
 using BookClassRoom.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using FAPCL.Model;
 
 namespace BookClassRoom.Pages.ClassroomManagement
 {
     public class CreateModel : PageModel
     {
-        private readonly BookClassRoom.Models.BookClassRoomContext _context;
+        private readonly BookClassRoomContext _context;
         private readonly IHubContext<SignalRServer> _hubContext;
-        public CreateModel(BookClassRoom.Models.BookClassRoomContext context, IHubContext<SignalRServer> hubContext)
+        public CreateModel(BookClassRoomContext context, IHubContext<SignalRServer> hubContext)
         {
             _context = context;
             _hubContext = hubContext;
