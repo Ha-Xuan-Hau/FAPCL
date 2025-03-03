@@ -1,0 +1,195 @@
+﻿@page
+@model BookClassRoom.Pages.BookingManagement.CreateBookingModel
+@{
+    ViewData["Title"] = "Booking Information";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* Card Styling */
+    .card {
+        border-radius: 15px;
+        background-color: #fff8e6; /* Màu pastel dịu nhẹ */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-family: 'Arial', sans-serif;
+        font-weight: bold;
+        color: #4a90e2;
+        font-size: 1.3rem;
+    }
+
+    .card-text {
+        font-size: 14px;
+        color: #555;
+        line-height: 1.6;
+    }
+
+    /* Page Title Styling */
+    h1 {
+        font-weight: bold;
+        color: #37474f;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Button Styling */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+
+    .btn-outline-secondary {
+        color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: #fff;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        color: white;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    /* Info Section Styling */
+    .info-section {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+
+    .info-section label {
+        font-weight: bold;
+        margin-bottom: 8px;
+        display: block;
+        color: #37474f;
+    }
+
+    textarea.form-control {
+        resize: none;
+        border-radius: 5px;
+    }
+
+    /* Responsive Layout */
+    .container {
+        padding-top: 30px;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 1rem;
+    }
+
+    .col-md-6 {
+        flex: 1 1 48%; /* Hai cột mỗi cột chiếm 48% chiều rộng */
+        max-width: 48%; /* Giới hạn tối đa */
+    }
+
+    .card {
+        margin-bottom: 20px;
+        height: 100%; /* Đảm bảo chiều cao đầy đủ nếu muốn đồng bộ */
+    }
+
+    .info-section {
+        height: 100%;
+    }
+
+
+    .col-md-4 {
+        flex: 1 1 calc(33.33% - 1rem);
+        max-width: calc(33.33% - 1rem);
+    }
+
+    .col-md-4 {
+        flex: 1 1 calc(25% - 1rem);
+    }
+
+    .d-flex {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Form Styling */
+    .form-label {
+        font-size: 1rem;
+        font-weight: bold;
+        color: #37474f;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        padding: 8px 12px;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+    }
+</style>
+
+<h2 class="text-center text-primary mb-4">@ViewData["Title"]</h2>
+<div class="row">
+    <!-- Classroom Information -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Information: @Model.RoomDetails.RoomName</h5>
+                <p class="card-text">
+                    <strong>Capacity:</strong> @Model.RoomDetails.Capacity<br>
+                    <strong>Room Type:</strong> @Model.RoomDetails.RoomType.RoomType1<br>
+                    <strong>Has Projector:</strong> @(Model.RoomDetails.HasProjector.GetValueOrDefault() ? "Yes" : "No")<br>
+                    <strong>Has Sound System:</strong> @(Model.RoomDetails.HasSoundSystem.GetValueOrDefault() ? "Yes" : "No")<br>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Form -->
+    <div class="col-md-8">
+        <div class="info-section">
+            <h5 class="card-title">Booking Detail</h5>
+            <form method="post">
+                <div class="mb-3">
+                    <strong>Date:</strong> @Model.SelectedDate.ToString("yyyy-MM-dd")<br>
+                    <strong>Room:</strong> @Model.RoomDetails.RoomName<br>
+                    <strong>Slot:</strong> @Model.SlotDetails.SlotName<br>
+                    <label for="purpose" class="form-label">Purpose:</label>
+                    <textarea id="purpose" name="Purpose" class="form-control" rows="3" required>@Model.Purpose</textarea>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="/BookingManagement/Index" class="btn btn-outline-secondary">Back</a>
+                    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
