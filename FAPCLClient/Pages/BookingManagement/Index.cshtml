@@ -1,0 +1,194 @@
+﻿@page
+@model BookClassRoom.Pages.BookingManagement.IndexModel
+@{
+    ViewData["Title"] = "Booking Classroom";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+@{
+    if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+}
+<h2 class="text-center text-primary mb-4">@ViewData["Title"]</h2>
+
+<div class="container">
+    <form method="get" class="p-3 border rounded shadow-sm bg-light">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="date" class="form-label">Date:</label>
+                <input type="date" id="date" name="SelectedDate" class="form-control" value="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+                       min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label for="roomTypeId" class="form-label">Room Type:</label>
+                <select id="roomTypeId" name="RoomTypeId" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var roomType in Model.RoomTypes)
+                    {
+                        <option value="@roomType.RoomTypeId" selected="@(Model.RoomTypeId == roomType.RoomTypeId)">
+                            @roomType.RoomType1
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="hasProjector" class="form-label">Has Projector:</label>
+                <select id="hasProjector" name="hasProjector" class="form-select">
+                    <option value="">-- Select --</option>
+                    <option value="true" selected="@(Model.HasProjector == true)">Yes</option>
+                    <option value="false" selected="@(Model.HasProjector == false)">No</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="hasSoundSystem" class="form-label">Has Sound System:</label>
+                <select id="hasSoundSystem" name="hasSoundSystem" class="form-select">
+                    <option value="">-- Select --</option>
+                    <option value="true" selected="@(Model.HasSoundSystem == true)">Yes</option>
+                    <option value="false" selected="@(Model.HasSoundSystem == false)">No</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> 
+                </button>
+
+            </div>
+
+
+        </div>
+    </form>
+    <div id="room-list">
+    <div class="table-responsive mt-4">
+        <table class="table table-bordered table-striped shadow-sm">
+            <thead class="table-primary text-center">
+                <tr>
+                    <th>Room (Capacity)</th>
+                    @foreach (var slot in Model.Slots)
+                    {
+                        <th>@slot.SlotName<br><small>@slot.StartTime - @slot.EndTime</small></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var room in Model.FilteredRooms)
+                {
+                    <tr>
+                        <td>@room.RoomName (@room.Capacity)</td>
+                        @foreach (var slot in Model.Slots)
+                        {
+                            <td class="text-center">
+                                @if (Model.IsSlotAvailable(room.RoomId, slot.SlotId, Model.SelectedDate))
+                                {
+                                    <a href="/BookingManagement/CreateBooking?roomId=@room.RoomId&slotId=@slot.SlotId&SelectedDate=@Model.SelectedDate.ToString("yyyy-MM-dd")">
+                                        <i class="bi bi-calendar-plus" style="font-size: 1.2rem; margin-right: 5px;"></i> 
+                                    </a>
+
+                                }
+                                else
+                                {
+                                    <span class="text-muted">🔒</span>
+
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+            <div class="mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-page="./Index" asp-route-currentPage="@(Model.CurrentPage - 1)"
+                               asp-route-roomTypeId="@Model.RoomTypeId" asp-route-hasProjector="@Model.HasProjector" asp-route-hasSoundSystem="@Model.HasSoundSystem"
+                               asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">Previous</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                <a class="page-link" asp-page="./Index" asp-route-currentPage="@i"
+                                   asp-route-roomTypeId="@Model.RoomTypeId" asp-route-hasProjector="@Model.HasProjector" asp-route-hasSoundSystem="@Model.HasSoundSystem"
+                                   asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" asp-page="./Index" asp-route-currentPage="@(Model.CurrentPage + 1)"
+                               asp-route-roomTypeId="@Model.RoomTypeId" asp-route-hasProjector="@Model.HasProjector" asp-route-hasSoundSystem="@Model.HasSoundSystem"
+                               asp-route-selectedDate="@Model.SelectedDate.ToString("yyyy-MM-dd")">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+
+            </div>
+    </div>
+</div>
+</div>
+
+<style>
+    body {
+        background-color: #fef9f9;
+    }
+    h2 {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+    }
+    .table thead th {
+        color: #333;
+    }
+    .table tbody tr:hover {
+        background-color: #f9f0f0;
+    }
+    .btn-success {
+        background-color: #91d5a1;
+        border-color: #91d5a1;
+    }
+    .btn-success:hover {
+        background-color: #79c38b;
+        border-color: #79c38b;
+    }
+    .form-label {
+        font-weight: 500;
+        color: #555;
+    }
+
+    .btn i {
+        font-size: 1.2rem; 
+        margin-right: 5px; 
+    }
+
+</style>
+
+<script type="text/javascript">
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/signalRServer")  // Connect to SignalR server
+        .build();
+
+    connection.start().then(function () {
+        console.log("SignalR Connected.");
+    }).catch(function (err) {
+        return console.error(err.toString());
+    });
+
+    connection.on("LoadRoom", function () {
+        loadRooms();
+    });
+
+    function loadRooms() {
+        $.ajax({
+            url: '/',
+            type: 'GET',
+            success: function (data) {
+                $('#room-list').html($(data).find('#room-list').html());
+            },
+            error: function (xhr, status, error) {
+                console.log("Error loading rooms: ", error);
+            }
+        });
+    }
+
+
+</script>

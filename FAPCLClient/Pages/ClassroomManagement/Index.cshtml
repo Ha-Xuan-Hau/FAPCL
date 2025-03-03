@@ -1,0 +1,183 @@
+﻿@page
+@model BookClassRoom.Pages.ClassroomManagement.IndexModel
+
+@{
+    ViewData["Title"] = "Classrooms Management";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* Card Styling */
+    .card {
+        border-radius: 15px;
+        background-color: linen;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+        transform: scale(1.05);
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+        font-weight: bold;
+        color: #5c6bc0;
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    .card-title {
+        font-family: 'Arial', sans-serif;
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    .card-text {
+        font-size: 14px;
+    }
+
+    .badge {
+        font-size: 0.9rem;
+        padding: 5px 10px;
+        border-radius: 10px;
+    }
+
+    /* Button Styling */
+    .btn-outline-primary:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-outline-info:hover {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .faded-card {
+        opacity: 0.6;
+        filter: grayscale(50%);
+    }
+
+    .container1{
+        margin-left:200px;
+        
+    }
+
+</style>
+
+<div class="container1">
+    <h1 class="text-center mb-4">@ViewData["Title"]</h1>
+
+    <!-- Filter Form -->
+    <form method="get" class="p-3 border rounded shadow-sm bg-light">
+        <div class="row mb-2">
+            <div class="col-md-3">
+                <label for="roomName" class="form-label">Room Name:</label>
+                <input type="text" id="roomName" name="RoomName" value="@Model.RoomName" class="form-control" placeholder="Enter room name">
+            </div>
+            <div class="col-md-3">
+                <label for="roomTypeId" class="form-label">Room Type:</label>
+                <select id="roomTypeId" name="RoomTypeId" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var roomType in Model.RoomTypes)
+                    {
+                        <option value="@roomType.RoomTypeId" selected="@(Model.RoomTypeId == roomType.RoomTypeId)">
+                            @roomType.RoomType1
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="hasProjector" class="form-label">Has Projector:</label>
+                <select id="hasProjector" name="hasProjector" class="form-select">
+                    <option value="">-- Select --</option>
+                    <option value="true" selected="@(Model.HasProjector == true)">Yes</option>
+                    <option value="false" selected="@(Model.HasProjector == false)">No</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="hasSoundSystem" class="form-label">Has Sound System:</label>
+                <select id="hasSoundSystem" name="hasSoundSystem" class="form-select">
+                    <option value="">-- Select --</option>
+                    <option value="true" selected="@(Model.HasSoundSystem == true)">Yes</option>
+                    <option value="false" selected="@(Model.HasSoundSystem == false)">No</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> 
+                </button>
+            </div>
+            
+        </div>
+    </form>
+</div>
+
+<div class="container my-4">
+    <div class="mb-3 text-end">
+        <a class="btn btn-primary" asp-page="Create">Create New Classroom</a>
+    </div>
+
+    <div class="row">
+        @foreach (var item in Model.Room)
+        {
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card @(item.IsAction == false ? "faded-card" : "")">
+                    <div class="card-body">
+                        <h5 class="card-title">@item.RoomName</h5>
+                        <p class="card-text">
+                            <strong>Capacity:</strong> @item.Capacity<br>
+                            <strong>Room Type:</strong> @item.RoomType.RoomType1<br>
+                            <strong>Has Projector:</strong> @(item.HasProjector.GetValueOrDefault() ? "Yes" : "No")<br>
+                            <strong>Has Sound System:</strong> @(item.HasSoundSystem.GetValueOrDefault() ? "Yes" : "No")<br>
+                            <strong>Status:</strong>
+                            <span class="badge bg-@(item.Status == "Available" ? "success" : item.Status == "Booked" ? "warning" : "danger")">
+                                @item.Status
+                            </span>
+                        </p>
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-outline-primary btn-sm" asp-page="./Edit" asp-route-id="@item.RoomId">Edit Classroom</a>
+                            @if (item.Status != "Booked" && item.Status != "InUse")
+                            {
+                                <form method="post" asp-page-handler="ToggleVisibility" asp-route-roomId="@item.RoomId" class="mb-0">
+                                    <button type="submit" class="btn btn-outline-info btn-sm">
+                                        @(item.IsAction == true ? "Hide" + " Classroom" : "Show" + " Classroom")
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                    <a class="page-link" asp-route-currentPage="@(Model.CurrentPage - 1)">Previous</a>
+                </li>
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                        <a class="page-link" asp-route-currentPage="@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-route-currentPage="@(Model.CurrentPage + 1)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
