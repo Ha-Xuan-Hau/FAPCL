@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 
 namespace FAPCL.Model
 {
-    public partial class AspNetRole
+    public class AspNetRole : IdentityRole<string>
     {
         public AspNetRole()
         {

@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 
 namespace FAPCL.Model
 {
-    public partial class AspNetRoleClaim
+    public partial class AspNetRoleClaim : IdentityRoleClaim<string>
     {
-        public int Id { get; set; }
-        public string RoleId { get; set; } = null!;
         public string? ClaimType { get; set; }
         public string? ClaimValue { get; set; }
 
