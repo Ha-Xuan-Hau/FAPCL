@@ -1,5 +1,7 @@
 ﻿using FAPCL.Model;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol;
 
 namespace FAPCL.Services
 {
@@ -71,6 +73,49 @@ namespace FAPCL.Services
             }
 
             return new OkObjectResult(true);
+        }
+
+        public async Task<IEnumerable<Room>> getAllRoom()
+        {
+            return await _context.Rooms.ToListAsync();
+        }
+
+        public async Task<Room?> getRoomById(int roomId)
+        {
+            return await _context.Rooms.FindAsync(roomId);
+        }
+
+        public async Task<Room?> addRoom(Room room)
+        {
+            await _context.Rooms.AddAsync(room);
+            _context.SaveChanges();
+            return room;
+        }
+
+        public async Task<Room?> updateRoom(int roomId, Room room)
+        {
+            var roomToUpdate = await _context.Rooms.FindAsync(roomId);
+            if (roomToUpdate == null)
+            {
+                return null;
+            }
+
+            _context.Entry(roomToUpdate).CurrentValues.SetValues(room);
+            await _context.SaveChangesAsync();
+            return roomToUpdate;
+        }
+
+        public async Task<Room?> deleteRoom(int roomId)
+        {
+            var roomToDelete = await _context.Rooms.FindAsync(roomId);
+            if (roomToDelete == null)
+            {
+                return null;
+            }
+
+            _context.Rooms.Remove(roomToDelete);
+            await _context.SaveChangesAsync();
+            return roomToDelete;
         }
     }
 }
