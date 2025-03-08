@@ -164,6 +164,9 @@ namespace FAPCL.Services
             return new OkObjectResult(new { Message = "Booking cancelled successfully" });
         }
 
-        
+        public async Task<IEnumerable<Booking>> GetAllBookings()
+        {
+            return await _context.Bookings.ToListAsync();
+        }
     }
 }
