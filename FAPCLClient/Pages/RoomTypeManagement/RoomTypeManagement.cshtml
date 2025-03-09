@@ -1,0 +1,124 @@
+﻿@page
+@model BookClassRoom.Pages.RoomTypeManagement.RoomTypeModel
+@{
+    ViewData["Title"] = "Management RoomType";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+<h2 class="text-center text-primary mb-4">@ViewData["Title"]</h2>
+
+<form method="get" style="display: flex; justify-content: flex-end; align-items: center;">
+    <div style="margin-bottom: 15px; display: flex; align-items: center;">
+        <input type="text" name="searchQuery" placeholder="Enter roomType name" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-right: 10px;" />
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> </button>
+    </div>
+</form>
+
+<!-- Form to Add New  -->
+<form method="post" style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+    <h3 style="color: #4a90e2; font-weight: bold;">Add New RoomType</h3>
+    <div style="margin-bottom: 15px;">
+        <label asp-for="RoomType.RoomType1" style="font-weight: bold;">Category Name</label>
+        <input asp-for="RoomType.RoomType1" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+        <span asp-validation-for="RoomType.RoomType1" style="color: red;"></span>
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label asp-for="RoomType.Description" style="font-weight: bold;">Description</label>
+        <input asp-for="RoomType.Description" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+        <span asp-validation-for="RoomType.Description" style="color: red;"></span>
+    </div>
+    <button type="submit" formaction="@Url.Page("RoomTypeManagement", "Create")" style="background-color: #4a90e2; color: white; padding: 10px 20px; border: none; border-radius: 4px;">Add RoomType</button>
+</form>
+
+<!-- Category List -->
+<h3>RoomType List</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>RoomType Name</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.RoomTypes != null && Model.RoomTypes.Any())
+        {
+            foreach (var roomtype in Model.RoomTypes)
+            {
+                <tr>
+                    <td>@roomtype.RoomType1</td>
+                    <td>@roomtype.Description</td>
+                    <td>
+                        <form method="post">
+                            <input type="hidden" name="categoryId" value="@roomtype.RoomTypeId" />
+                           
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#editModal"
+                                    data-id="@roomtype.RoomTypeId" data-name="@roomtype.RoomType1" data-description="@roomtype.Description">
+                                Edit
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="4">No RoomType available.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Bootstrap Modal for Editing Categories -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #f2f2f2;">
+                <!-- Thêm màu nền vào header -->
+                <h5 class="modal-title" id="editModalLabel" style="font-weight: bold; color: #4a90e2;">Edit RoomType</h5> <!-- Đậm và chỉnh màu -->
+                <button type="button" class="close" data-dismiss="modal" style="background-color: lightcoral" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" style="font-family: 'Arial', sans-serif; font-size: 14px;">
+                <!-- Chỉnh font chữ và kích thước -->
+                <form id="editRoomTypeForm" method="post">
+                    <input type="hidden" id="editRoomTypeId" name="RoomType.RoomTypeId" />
+                    <div class="form-group">
+                        <label for="editRoomTypeName">RoomType Name</label>
+                        <input type="text" class="form-control" id="editRoomTypeName" name="RoomType.RoomType1" />
+                        <span asp-validation-for="RoomType.RoomType1" style="color: red;"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="editRoomTypeDescription">Description</label>
+                        <input type="text" class="form-control" id="editRoomTypeDescription" name="RoomType.Description" />
+                        <span asp-validation-for="RoomType.Description" style="color: red;"></span>
+                    </div>
+                </form>
+
+            </div>
+            <div class="modal-footer" style="background-color: #f9f9f9;">
+                <!-- Thêm màu nền vào footer -->
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="font-weight: bold; background-color: lightcoral">Close</button> <!-- Đậm nút Close -->
+                <button type="submit" form="editRoomTypeForm" class="btn btn-primary" formaction="@Url.Page("RoomTypeManagement", "Update")" style="font-weight: bold;">Save changes</button> <!-- Đậm nút Save -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS and jQuery (add in the layout if not already included) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $('#editModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Button that triggered the modal
+        var id = button.data('id');
+        var name = button.data('name');
+        var description = button.data('description');
+
+        var modal = $(this);
+        modal.find('#editRoomTypeId').val(id);
+        modal.find('#editRoomTypeName').val(name);
+        modal.find('#editRoomTypeDescription').val(description);
+    });
+</script>

@@ -1,0 +1,119 @@
+﻿@page
+@model BookClassRoom.Pages.ClassroomManagement.CreateModel
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background-color: #fef9f3; /* Màu nền pastel */
+        font-family: 'Arial', sans-serif;
+    }
+
+    .containerCreate {
+        max-width: 700px;
+        background-color: #ffffff; /* Màu nền cho form */
+        border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-left:300px;
+    }
+
+    h1 {
+         color: #007bff;
+       
+    }
+
+    .form-label {
+        color: #495057; /* Màu chữ nhạt */
+        font-weight: bold;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 1px solid #ced4da;
+        padding: 10px;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: lightblue; /* Màu viền khi focus */
+            box-shadow: 0 0 5px rgba(162, 213, 198, 0.8);
+        }
+
+    .btn-primary {
+        
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #6faedb;
+        }
+
+    .btn-secondary {
+        background-color: lightcoral; /* Màu pastel hồng nhạt */
+        border: none;
+    }
+
+        .btn-secondary:hover {
+            background-color: #e4c3d0;
+        }
+
+    .text-danger {
+        font-size: 0.9rem;
+    }
+</style>
+
+<div class="containerCreate my-4">
+    <h1 class="text-center mb-4">@ViewData["Title"]</h1>
+
+    <form method="post" asp-page="Create">
+        <div class="mb-3">
+            <label asp-for="Room.RoomName" class="form-label">Room Name</label>
+            <input asp-for="Room.RoomName" class="form-control" />
+            <span asp-validation-for="Room.RoomName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Room.Capacity" class="form-label">Capacity</label>
+            <input asp-for="Room.Capacity" type="number" class="form-control" min="1" />
+            <span asp-validation-for="Room.Capacity" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Room.RoomTypeId" class="form-label">Room Type</label>
+            <select asp-for="Room.RoomTypeId" class="form-select" asp-items="Model.RoomTypeOptions">
+                <option value="">-- Select Room Type --</option>
+            </select>
+            <span asp-validation-for="Room.RoomTypeId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Room.HasProjector" class="form-label">Has Projector</label>
+            <select asp-for="Room.HasProjector" class="form-select">
+                <option value="">-- Select --</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+            <span asp-validation-for="Room.HasProjector" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Room.HasSoundSystem" class="form-label">Has Sound System</label>
+            <select asp-for="Room.HasSoundSystem" class="form-select">
+                <option value="">-- Select --</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+            <span asp-validation-for="Room.HasSoundSystem" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

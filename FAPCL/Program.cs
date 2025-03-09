@@ -1,4 +1,5 @@
 ﻿using FAPCL.Model;
+using FAPCL.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -14,12 +15,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Cấu hình Kestrel
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(5000);
-    options.ListenAnyIP(5001, listenOptions => listenOptions.UseHttps());
-});
+//builder.WebHost.ConfigureKestrel(options =>{
+ //   options.ListenAnyIP(5000);
+  //  options.ListenAnyIP(5001, listenOptions => listenOptions.UseHttps());});
 
 // Cấu hình DbContext và Identity
 builder.Services.AddDbContext<BookClassRoomContext>(options =>
@@ -81,6 +79,11 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
