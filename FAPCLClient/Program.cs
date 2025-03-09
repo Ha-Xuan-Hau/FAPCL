@@ -1,4 +1,12 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+using FAPCLClient.Model;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("DBContextConnection") ?? throw new InvalidOperationException("Connection string 'DBContextConnection' not found.");
+
+builder.Services.AddDbContext<BookClassRoomContext>(options => options.UseSqlServer(connectionString));
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<BookClassRoomContext>();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -8,6 +16,7 @@ builder.Services.AddHttpClient("FAPCL", client =>
 {
     client.BaseAddress = new Uri("https://localhost:5001/api/");
 });
+builder.Services.AddSession();
 
 var app = builder.Build();
 
@@ -27,5 +36,6 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.UseSession();
 
 app.Run();

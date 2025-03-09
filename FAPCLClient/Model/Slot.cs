@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace FAPCL.Model
+namespace FAPCLClient.Model
 {
     public partial class Slot
     {

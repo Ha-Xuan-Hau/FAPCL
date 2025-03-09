@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using FAPCLClient.Model;
 
-namespace FAPCL.Model
+namespace FAPCLClient.Model
 {
-    public partial class BookClassRoomContext : DbContext
+    public partial class BookClassRoomContext : IdentityDbContext<AspNetUser, IdentityRole, string>
     {
         public BookClassRoomContext()
         {
@@ -16,12 +19,12 @@ namespace FAPCL.Model
         {
         }
 
-        public virtual DbSet<AspNetRole> AspNetRoles { get; set; } = null!;
-        public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; } = null!;
+        //public virtual DbSet<AspNetRole> AspNetRoles { get; set; } = null!;
+        //public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; } = null!;
         public virtual DbSet<AspNetUser> AspNetUsers { get; set; } = null!;
-        public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; } = null!;
-        public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; } = null!;
-        public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; } = null!;
+        //public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; } = null!;
+        //public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; } = null!;
+        public virtual DbSet<IdentityUserToken<string>> AspNetUserTokens { get; set; } = null!;
         public virtual DbSet<Booking> Bookings { get; set; } = null!;
         public virtual DbSet<BookingHistory> BookingHistories { get; set; } = null!;
         public virtual DbSet<Class> Classes { get; set; } = null!;
@@ -44,11 +47,15 @@ namespace FAPCL.Model
                                           .SetBasePath(Directory.GetCurrentDirectory())
                                           .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
             IConfigurationRoot configuration = builder.Build();
-            optionsBuilder.UseSqlServer(configuration.GetConnectionString("ConnectionStrings"));
+            optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<IdentityUserLogin<string>>()
+            .HasKey(l => new { l.LoginProvider, l.ProviderKey });
+
             modelBuilder.Entity<AspNetRole>(entity =>
             {
                 entity.Property(e => e.Id).HasMaxLength(128);
@@ -88,22 +95,6 @@ namespace FAPCL.Model
 
                 entity.Property(e => e.UserName).HasMaxLength(128);
 
-                entity.HasMany(d => d.Roles)
-                    .WithMany(p => p.Users)
-                    .UsingEntity<Dictionary<string, object>>(
-                        "AspNetUserRole",
-                        l => l.HasOne<AspNetRole>().WithMany().HasForeignKey("RoleId").HasConstraintName("FK__AspNetUse__RoleI__44FF419A"),
-                        r => r.HasOne<AspNetUser>().WithMany().HasForeignKey("UserId").HasConstraintName("FK__AspNetUse__UserI__440B1D61"),
-                        j =>
-                        {
-                            j.HasKey("UserId", "RoleId").HasName("PK__AspNetUs__AF2760AD971EAC7F");
-
-                            j.ToTable("AspNetUserRoles");
-
-                            j.IndexerProperty<string>("UserId").HasMaxLength(128);
-
-                            j.IndexerProperty<string>("RoleId").HasMaxLength(128);
-                        });
             });
 
             modelBuilder.Entity<AspNetUserClaim>(entity =>
@@ -133,22 +124,8 @@ namespace FAPCL.Model
                     .HasConstraintName("FK__AspNetUse__UserI__412EB0B6");
             });
 
-            modelBuilder.Entity<AspNetUserToken>(entity =>
-            {
-                entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name })
-                    .HasName("PK__AspNetUs__8CC49841D8B5DEC4");
+            modelBuilder.Entity<IdentityUserToken<string>>().ToTable("AspNetUserTokens");
 
-                entity.Property(e => e.UserId).HasMaxLength(128);
-
-                entity.Property(e => e.LoginProvider).HasMaxLength(128);
-
-                entity.Property(e => e.Name).HasMaxLength(128);
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.AspNetUserTokens)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK__AspNetUse__UserI__47DBAE45");
-            });
 
             modelBuilder.Entity<Booking>(entity =>
             {

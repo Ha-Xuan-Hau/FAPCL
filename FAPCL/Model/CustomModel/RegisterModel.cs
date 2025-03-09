@@ -11,5 +11,6 @@ namespace FAPCL.Model.CustomModel
         public string Address { get; set; }
         public string Password { get; set; }
         public string ConfirmPassword { get; set; }
+        public string Role { get; set; }
     }
 }
