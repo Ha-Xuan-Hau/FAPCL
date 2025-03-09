@@ -46,7 +46,7 @@ namespace FAPCL.Controllers
             return await _bookingService.CancelBooking(request);
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpGet("admin/list")]
         public async Task<IActionResult> GetAllBookings()
         {

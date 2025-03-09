@@ -1,5 +1,6 @@
 ﻿using FAPCL.Model;
 using FAPCL.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,7 @@ namespace FAPCL.Controllers
             return _roomService.CheckSlotAvailability(roomId, slotId, selectedDate);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("/admin/room")]
         public async Task<IActionResult> GetAllRooms()
         {
@@ -39,6 +41,7 @@ namespace FAPCL.Controllers
             return new OkObjectResult(rooms);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("/admin/room/{roomId}")]
         public IActionResult GetRooms(int roomId)
         {
@@ -50,6 +53,7 @@ namespace FAPCL.Controllers
             return new OkObjectResult(rooms);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("/admin/room/{roomId}")]
         public IActionResult UpdateRoom(int roomId, [FromBody] Room room)
         {
@@ -61,6 +65,7 @@ namespace FAPCL.Controllers
             return new OkObjectResult(roomupdate);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("/admin/room/add")]
         public IActionResult AddRoom([FromBody] Room room)
         {
@@ -72,6 +77,7 @@ namespace FAPCL.Controllers
             return new OkObjectResult(room);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("/admin/room/{roomId}")]
         public IActionResult DeleteRoom(int roomId)
         {
