@@ -18,12 +18,14 @@ namespace FAPCL.Model
         {
         }
 
-        //public virtual DbSet<AspNetRole> AspNetRoles { get; set; } = null!;
-        //public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; } = null!;
+        public DbSet<IdentityUserClaim<string>> AspNetUserClaims { get; set; }
+        public DbSet<IdentityUserLogin<string>> AspNetUserLogins { get; set; }
+        public DbSet<IdentityUserRole<string>> AspNetUserRoles { get; set; }
+        public DbSet<IdentityUserToken<string>> AspNetUserTokens { get; set; }
+        public DbSet<IdentityRole> AspNetRoles { get; set; }
+        public DbSet<IdentityRoleClaim<string>> AspNetRoleClaims { get; set; }
+
         public virtual DbSet<AspNetUser> AspNetUsers { get; set; } = null!;
-        //public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; } = null!;
-        //public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; } = null!;
-        //public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; } = null!;
         public virtual DbSet<Booking> Bookings { get; set; } = null!;
         public virtual DbSet<BookingHistory> BookingHistories { get; set; } = null!;
         public virtual DbSet<Class> Classes { get; set; } = null!;
@@ -52,92 +54,66 @@ namespace FAPCL.Model
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<IdentityUserLogin<string>>()
-            .HasKey(l => new { l.LoginProvider, l.ProviderKey });
-
-            modelBuilder.Entity<AspNetRole>(entity =>
+            modelBuilder.Entity<IdentityUserLogin<string>>(entity =>
             {
-                entity.Property(e => e.Id).HasMaxLength(128);
+                entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
 
-                entity.Property(e => e.Name).HasMaxLength(256);
+                entity.HasIndex(e => e.UserId, "IX_AspNetUserLogins_UserId");
 
-                entity.Property(e => e.NormalizedName).HasMaxLength(256);
+                //entity.HasOne(d => d.User)
+                //    .WithMany(p => p.Logins)
+                //    .HasForeignKey(d => d.UserId);
             });
 
-            modelBuilder.Entity<AspNetRoleClaim>(entity =>
+            modelBuilder.Entity<IdentityUserRole<string>>(entity =>
             {
-                entity.Property(e => e.RoleId).HasMaxLength(128);
+                entity.HasKey(e => new { e.UserId, e.RoleId });
 
-                entity.HasOne(d => d.Role)
-                    .WithMany(p => p.AspNetRoleClaims)
-                    .HasForeignKey(d => d.RoleId)
-                    .HasConstraintName("FK__AspNetRol__RoleI__3B75D760");
+                entity.HasIndex(e => e.RoleId, "IX_AspNetUserRoles_RoleId");
+
+                //entity.HasOne(d => d.Role)
+                //    .WithMany(p => p.AspNetUserRoles)
+                //    .HasForeignKey(d => d.RoleId);
+
+                //entity.HasOne(d => d.User)
+                //    .WithMany(p => p.AspNetUserRoles)
+                //    .HasForeignKey(d => d.UserId);
+            });
+
+            modelBuilder.Entity<IdentityUserClaim<string>>(entity =>
+            {
+                entity.HasIndex(e => e.UserId, "IX_AspNetUserClaims_UserId");
+
+                //entity.HasOne(d => d.User)
+                //    .WithMany(p => p.AspNetUserClaims)
+                //    .HasForeignKey(d => d.UserId);
+            });
+
+            modelBuilder.Entity<IdentityUserToken<string>>(entity =>
+            {
+                entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
+
+                //entity.HasOne(d => d.User)
+                //    .WithMany(p => p.AspNetUserTokens)
+                //    .HasForeignKey(d => d.UserId);
             });
 
             modelBuilder.Entity<AspNetUser>(entity =>
             {
-                entity.Property(e => e.Id).HasMaxLength(128);
+                entity.HasIndex(e => e.NormalizedEmail, "EmailIndex");
 
-                entity.Property(e => e.Address).HasMaxLength(256);
+                entity.HasIndex(e => e.NormalizedUserName, "UserNameIndex")
+                    .IsUnique()
+                    .HasFilter("([NormalizedUserName] IS NOT NULL)");
 
-                entity.Property(e => e.Email).HasMaxLength(128);
+                entity.Property(e => e.Email).HasMaxLength(256);
 
-                entity.Property(e => e.FirstName).HasMaxLength(128);
+                entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
 
-                entity.Property(e => e.LastName).HasMaxLength(128);
+                entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
 
-                entity.Property(e => e.NormalizedEmail).HasMaxLength(128);
+                entity.Property(e => e.UserName).HasMaxLength(256);
 
-                entity.Property(e => e.NormalizedUserName).HasMaxLength(128);
-
-                entity.Property(e => e.PhoneNumber).HasMaxLength(128);
-
-                entity.Property(e => e.UserName).HasMaxLength(128);
-
-            });
-
-            modelBuilder.Entity<AspNetUserClaim>(entity =>
-            {
-                entity.Property(e => e.UserId).HasMaxLength(128);
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.AspNetUserClaims)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK__AspNetUse__UserI__3E52440B");
-            });
-
-            modelBuilder.Entity<AspNetUserLogin>(entity =>
-            {
-                entity.HasKey(e => new { e.LoginProvider, e.ProviderKey })
-                    .HasName("PK__AspNetUs__2B2C5B52F2B1CA90");
-
-                entity.Property(e => e.LoginProvider).HasMaxLength(128);
-
-                entity.Property(e => e.ProviderKey).HasMaxLength(128);
-
-                entity.Property(e => e.UserId).HasMaxLength(128);
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.AspNetUserLogins)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK__AspNetUse__UserI__412EB0B6");
-            });
-
-            modelBuilder.Entity<AspNetUserToken>(entity =>
-            {
-                entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name })
-                    .HasName("PK__AspNetUs__8CC49841D8B5DEC4");
-
-                entity.Property(e => e.UserId).HasMaxLength(128);
-
-                entity.Property(e => e.LoginProvider).HasMaxLength(128);
-
-                entity.Property(e => e.Name).HasMaxLength(128);
-
-                entity.HasOne(d => d.User)
-                    .WithMany(p => p.AspNetUserTokens)
-                    .HasForeignKey(d => d.UserId)
-                    .HasConstraintName("FK__AspNetUse__UserI__47DBAE45");
             });
 
             modelBuilder.Entity<Booking>(entity =>

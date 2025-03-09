@@ -8,16 +8,12 @@ namespace FAPCL.Model
     {
         public AspNetUser()
         {
-            AspNetUserClaims = new HashSet<AspNetUserClaim>();
-            AspNetUserLogins = new HashSet<AspNetUserLogin>();
-            AspNetUserTokens = new HashSet<AspNetUserToken>();
             Bookings = new HashSet<Booking>();
             Classes = new HashSet<Class>();
             ExamSchedules = new HashSet<ExamSchedule>();
             News = new HashSet<News>();
             StudentClasses = new HashSet<StudentClass>();
             Timetables = new HashSet<Timetable>();
-            Roles = new HashSet<AspNetRole>();
         }
 
         //public string Id { get; set; } = null!;
@@ -40,9 +36,6 @@ namespace FAPCL.Model
         //public bool LockoutEnabled { get; set; }
         //public int AccessFailedCount { get; set; }
 
-        public virtual ICollection<AspNetUserClaim> AspNetUserClaims { get; set; }
-        public virtual ICollection<AspNetUserLogin> AspNetUserLogins { get; set; }
-        public virtual ICollection<AspNetUserToken> AspNetUserTokens { get; set; }
         public virtual ICollection<Booking> Bookings { get; set; }
         public virtual ICollection<Class> Classes { get; set; }
         public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
@@ -50,6 +43,5 @@ namespace FAPCL.Model
         public virtual ICollection<StudentClass> StudentClasses { get; set; }
         public virtual ICollection<Timetable> Timetables { get; set; }
 
-        public virtual ICollection<AspNetRole> Roles { get; set; }
     }
 }
