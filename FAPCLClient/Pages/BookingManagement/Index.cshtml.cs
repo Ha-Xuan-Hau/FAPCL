@@ -1,4 +1,4 @@
-﻿using FAPCL.Model;
+﻿using FAPCLClient.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 

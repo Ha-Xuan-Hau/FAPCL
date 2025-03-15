@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BookClassRoom.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using FAPCL.Model;
+using FAPCLClient.Model;
 
 namespace BookClassRoom.Pages.ClassroomManagement
 {
