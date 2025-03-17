@@ -1,8 +1,9 @@
 ﻿using FAPCL.Model;
 using FAPCL.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace FAPCL.Controllers
 {
@@ -18,75 +19,62 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("rooms")]
-        public IActionResult GetRooms(DateTime? selectedDate, int? roomTypeId, bool? hasProjector, bool? hasSoundSystem, int currentPage = 1)
+        public async Task<IActionResult> GetRooms(DateTime? selectedDate, int? roomTypeId, bool? hasProjector, bool? hasSoundSystem, int currentPage = 1)
         {
-            return _roomService.GetRooms(selectedDate, roomTypeId, hasProjector, hasSoundSystem, currentPage);
+            var result = await _roomService.GetRooms(selectedDate, roomTypeId, hasProjector, hasSoundSystem, currentPage);
+            
+            if (result.Rooms == null || !result.Rooms.Any())
+            {
+                return NotFound("No rooms found");
+            }
+
+            return Ok(new { result.Rooms, result.TotalPages });
         }
 
         [HttpGet("availability")]
-        public IActionResult CheckSlotAvailability(int roomId, int slotId, DateTime selectedDate)
+        public async Task<IActionResult> CheckSlotAvailability(int roomId, int slotId, DateTime selectedDate)
         {
-            return _roomService.CheckSlotAvailability(roomId, slotId, selectedDate);
+            var isAvailable = await _roomService.CheckSlotAvailability(roomId, slotId, selectedDate);
+            return Ok(new { roomId, slotId, selectedDate, isAvailable });
         }
-
-        [Authorize(Roles = "Admin")]
-        [HttpGet("/admin/room")]
+        
+        [HttpGet("admin/room")]
         public async Task<IActionResult> GetAllRooms()
         {
-            var rooms = await _roomService.getAllRoom();
-            if (rooms == null || !rooms.Any())
-            {
-                return new NotFoundResult();
-            }
-            return new OkObjectResult(rooms);
+            var rooms = await _roomService.GetAllRooms();
+            return rooms.Any() ? Ok(rooms) : NotFound("No rooms available");
         }
-
-        [Authorize(Roles = "Admin")]
-        [HttpGet("/admin/room/{roomId}")]
-        public IActionResult GetRooms(int roomId)
+        
+        [HttpGet("admin/room/{roomId}")]
+        public async Task<IActionResult> GetRoomById(int roomId)
         {
-            var rooms = _roomService.getRoomById(roomId);
-            if (rooms == null)
-            {
-                return new NotFoundResult();
-            }
-            return new OkObjectResult(rooms);
+            var room = await _roomService.GetRoomById(roomId);
+            return room != null ? Ok(room) : NotFound($"Room with ID {roomId} not found");
         }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost("/admin/room/{roomId}")]
-        public IActionResult UpdateRoom(int roomId, [FromBody] Room room)
+        
+        [HttpPut("admin/room/{roomId}")]
+        public async Task<IActionResult> UpdateRoom(int roomId, [FromBody] Room room)
         {
-            var roomupdate = _roomService.updateRoom(roomId, room);
-            if (roomupdate == null)
-            {
-                return new NotFoundResult();
-            }
-            return new OkObjectResult(roomupdate);
+            var updatedRoom = await _roomService.UpdateRoom(roomId, room);
+            return updatedRoom != null ? Ok(updatedRoom) : NotFound($"Room with ID {roomId} not found");
         }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPut("/admin/room/add")]
-        public IActionResult AddRoom([FromBody] Room room)
+        
+        [HttpPost("admin/room/add")]
+        public async Task<IActionResult> AddRoom([FromBody] Room room)
         {
-            var roomAdd = _roomService.addRoom(room);
-            if (roomAdd == null)
+            var newRoom = await _roomService.AddRoom(room);
+            if (newRoom == null)
             {
-                return new NotFoundResult();
+                return BadRequest("Failed to add room");
             }
-            return new OkObjectResult(room);
+            return CreatedAtAction(nameof(GetRoomById), new { roomId = newRoom.RoomId }, newRoom);
         }
-
-        [Authorize(Roles = "Admin")]
-        [HttpDelete("/admin/room/{roomId}")]
-        public IActionResult DeleteRoom(int roomId)
+        
+        [HttpDelete("admin/room/{roomId}")]
+        public async Task<IActionResult> DeleteRoom(int roomId)
         {
-            var roomDelete = _roomService.deleteRoom(roomId);
-            if (roomDelete == null)
-            {
-                return new NotFoundResult();
-            }
-            return new OkObjectResult(roomId);
+            var isDeleted = await _roomService.DeleteRoom(roomId);
+            return isDeleted ? Ok($"Room {roomId} deleted successfully") : NotFound($"Room {roomId} not found");
         }
     }
 }

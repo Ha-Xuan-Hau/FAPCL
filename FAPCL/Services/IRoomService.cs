@@ -6,12 +6,12 @@ namespace FAPCL.Services
 {
     public interface IRoomService
     {
-        Task<IEnumerable<Room>> getAllRoom();
-        Task<Room?> getRoomById(int roomId);
-        Task<Room?> addRoom(Room room);
-        Task<Room?> updateRoom(int roomId, Room room);
-        Task<Room?> deleteRoom(int roomId);
-        IActionResult GetRooms(DateTime? selectedDate, int? roomTypeId, bool? hasProjector, bool? hasSoundSystem, int currentPage);
-        IActionResult CheckSlotAvailability(int roomId, int slotId, DateTime selectedDate);
+        Task<IEnumerable<Room>> GetAllRooms();
+        Task<Room?> GetRoomById(int roomId);
+        Task<Room?> AddRoom(Room room);
+        Task<Room?> UpdateRoom(int roomId, Room room);
+        Task<bool> DeleteRoom(int roomId);
+        Task<(IEnumerable<Room> Rooms, int TotalPages)> GetRooms(DateTime? selectedDate, int? roomTypeId, bool? hasProjector, bool? hasSoundSystem, int currentPage);
+        Task<bool> CheckSlotAvailability(int roomId, int slotId, DateTime selectedDate);
     }
 }
