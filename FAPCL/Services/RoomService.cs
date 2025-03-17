@@ -14,7 +14,7 @@ namespace FAPCL.Services
             _context = context;
         }
 
-        public IActionResult GetRooms(DateTime? selectedDate, int? roomTypeId, bool? hasProjector, bool? hasSoundSystem, int currentPage = 1)
+        public async Task<(IEnumerable<Room> Rooms, int TotalPages)> GetRooms(DateTime? selectedDate, int? roomTypeId, bool? hasProjector, bool? hasSoundSystem, int currentPage = 1)
         {
             selectedDate ??= DateTime.Now.Date;
             if (selectedDate < DateTime.Now.Date)
@@ -28,94 +28,76 @@ namespace FAPCL.Services
                 .Where(r => !hasProjector.HasValue || r.HasProjector == hasProjector.Value)
                 .Where(r => !hasSoundSystem.HasValue || r.HasSoundSystem == hasSoundSystem.Value);
 
-            int totalRooms = filteredRoomsQuery.Count();
+            int totalRooms = await filteredRoomsQuery.CountAsync();
             int pageSize = 6;
             int totalPages = (int)Math.Ceiling(totalRooms / (double)pageSize);
+            currentPage = Math.Clamp(currentPage, 1, totalPages);
 
-            currentPage = currentPage < 1 ? 1 : currentPage > totalPages ? totalPages : currentPage;
-
-            var rooms = filteredRoomsQuery
+            var rooms = await filteredRoomsQuery
                 .Skip((currentPage - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
-            var response = new
-            {
-                FilteredRooms = rooms,
-                Slots = _context.Slots.ToList(),
-                RoomTypes = _context.RoomTypes.ToList(),
-                CurrentPage = currentPage,
-                TotalPages = totalPages,
-                SelectedDate = selectedDate
-            };
-
-            return new OkObjectResult(response);
+            return (rooms, totalPages);
         }
 
-        public IActionResult CheckSlotAvailability(int roomId, int slotId, DateTime selectedDate)
+        public async Task<bool> CheckSlotAvailability(int roomId, int slotId, DateTime selectedDate)
         {
             var currentTime = DateTime.Now.TimeOfDay;
             var currentDate = DateTime.Now.Date;
 
-            var existingBooking = _context.Bookings
-                .Where(b => b.RoomId == roomId
-                    && b.SlotId == slotId
-                    && b.SlotBookingDate == selectedDate
-                    && b.Status == "Confirmed")
-                .FirstOrDefault();
+            bool isBooked = await _context.Bookings
+                .AnyAsync(b => b.RoomId == roomId &&
+                               b.SlotId == slotId &&
+                               b.SlotBookingDate == selectedDate &&
+                               b.Status == "Confirmed");
 
-            if (existingBooking != null) return new OkObjectResult(false);
+            if (isBooked) return false;
 
             if (selectedDate.Date == currentDate)
             {
-                var slot = _context.Slots.FirstOrDefault(s => s.SlotId == slotId);
-                return new OkObjectResult(slot != null && slot.StartTime > currentTime);
+                var slot = await _context.Slots.FirstOrDefaultAsync(s => s.SlotId == slotId);
+                return slot != null && slot.StartTime > currentTime;
             }
 
-            return new OkObjectResult(true);
+            return true;
         }
 
-        public async Task<IEnumerable<Room>> getAllRoom()
+        public async Task<IEnumerable<Room>> GetAllRooms()
         {
             return await _context.Rooms.ToListAsync();
         }
 
-        public async Task<Room?> getRoomById(int roomId)
+        public async Task<Room?> GetRoomById(int roomId)
         {
             return await _context.Rooms.FindAsync(roomId);
         }
 
-        public async Task<Room?> addRoom(Room room)
+        public async Task<Room?> AddRoom(Room room)
         {
             await _context.Rooms.AddAsync(room);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return room;
         }
 
-        public async Task<Room?> updateRoom(int roomId, Room room)
+        public async Task<Room?> UpdateRoom(int roomId, Room room)
         {
             var roomToUpdate = await _context.Rooms.FindAsync(roomId);
-            if (roomToUpdate == null)
-            {
-                return null;
-            }
+            if (roomToUpdate == null) return null;
 
             _context.Entry(roomToUpdate).CurrentValues.SetValues(room);
             await _context.SaveChangesAsync();
             return roomToUpdate;
         }
 
-        public async Task<Room?> deleteRoom(int roomId)
+        public async Task<bool> DeleteRoom(int roomId)
         {
             var roomToDelete = await _context.Rooms.FindAsync(roomId);
-            if (roomToDelete == null)
-            {
-                return null;
-            }
+            if (roomToDelete == null) return false;
 
             _context.Rooms.Remove(roomToDelete);
             await _context.SaveChangesAsync();
-            return roomToDelete;
+            return true;
         }
     }
 }

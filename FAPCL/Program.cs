@@ -96,9 +96,15 @@ if (app.Environment.IsDevelopment())
 
 // Middleware xử lý HTTPS và Authentication
 app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
 
-app.MapControllers();
+app.UseRouting();
+
+app.UseAuthentication(); // Add this line to enable authentication
+app.UseAuthorization();  // Add this line to enable authorization
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
 
 app.Run();
