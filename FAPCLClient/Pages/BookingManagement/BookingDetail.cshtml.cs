@@ -1,22 +1,28 @@
-
-using FAPCL.Model;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using FAPCLClient.Model;
 
 namespace BookClassRoom.Pages.BookingManagement
 {
     public class BookingDetailModel : PageModel
     {
-        private readonly BookClassRoomContext _context;
         private readonly UserManager<AspNetUser> _userManager;
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+        
+        private const string ApiBaseUrl = "http://localhost:5043/api/Booking";
 
-        public BookingDetailModel(BookClassRoomContext context, UserManager<AspNetUser> userManager)
+        public BookingDetailModel(UserManager<AspNetUser> userManager, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _context = context;
             _userManager = userManager;
+            _httpClient = httpClientFactory.CreateClient();
+            _configuration = configuration;
+
             ConfirmedBookings = new List<Booking>();
             CompleteBookings = new List<Booking>();
             AllBookings = new List<Booking>();
@@ -42,102 +48,55 @@ namespace BookClassRoom.Pages.BookingManagement
         {
             UserId = _userManager.GetUserId(User);
             IsAdmin = User.IsInRole("Admin");
-            var currentTime = DateTime.Now;
-            var currentTimeOfDay = currentTime.TimeOfDay;
-
-            IQueryable<Booking> bookingsQuery = _context.Bookings
-                .Include(b => b.Room)
-                .Include(b => b.Slot)
-                .Include(b => b.User);
-
-            if (!string.IsNullOrWhiteSpace(SearchQuery))
-            {
-                bookingsQuery = bookingsQuery.Where(b => b.Room.RoomName.Contains(SearchQuery));
-            }
-
-            var bookings = _context.Bookings
-                .Where(b => b.SlotBookingDate <= currentTime && b.Slot.EndTime < currentTimeOfDay && b.Status == "Confirmed")
-                .ToList();
-
-            foreach (var booking in bookings)
-            {
-                booking.Status = "Completed";
-            }
-            _context.SaveChanges();
 
             if (IsAdmin)
             {
-                IQueryable<Booking> allBookingsQuery = _context.Bookings
-                    .Include(b => b.Room)
-                    .Include(b => b.Slot)
-                    .Include(b => b.User);
+                var url = $"{ApiBaseUrl}/details?currentPage={currentPage}&searchQuery={SearchQuery}";
+                var result = await _httpClient.GetFromJsonAsync<PagedResult<Booking>>(url);
 
-                if (!string.IsNullOrWhiteSpace(SearchQuery))
+                if (result != null)
                 {
-                    allBookingsQuery = allBookingsQuery.Where(b => b.Room.RoomName.Contains(SearchQuery));
+                    AllBookings = result.Items;
+                    TotalPages = result.TotalPages;
+                    CurrentPage = result.CurrentPage;
                 }
-
-                var allBooking = await allBookingsQuery.CountAsync();
-                TotalPages = (int)Math.Ceiling(allBooking / (double)PageSize2);
-                CurrentPage = Math.Max(1, Math.Min(currentPage, TotalPages));
-
-                AllBookings = await allBookingsQuery
-                    .Skip((CurrentPage - 1) * PageSize2)
-                    .Take(PageSize2)
-                    .ToListAsync();
             }
             else
             {
-                IQueryable<Booking> confirmedQuery = _context.Bookings
-                    .Where(b => b.UserId == UserId && b.Status == "Confirmed")
-                    .Include(b => b.Room)
-                    .Include(b => b.Slot);
+                var confirmedUrl = $"{ApiBaseUrl}/confirmed?searchQuery={SearchQuery}";
+                ConfirmedBookings = await _httpClient.GetFromJsonAsync<List<Booking>>(confirmedUrl) ?? new List<Booking>();
 
-                if (!string.IsNullOrWhiteSpace(SearchQuery))
+                var completedUrl = $"{ApiBaseUrl}/completed?searchQuery={SearchQuery}&currentPage={currentPage}";
+                var result = await _httpClient.GetFromJsonAsync<PagedResult<Booking>>(completedUrl);
+
+                if (result != null)
                 {
-                    confirmedQuery = confirmedQuery.Where(b => b.Room.RoomName.Contains(SearchQuery));
+                    CompleteBookings = result.Items;
+                    TotalPages = result.TotalPages;
+                    CurrentPage = result.CurrentPage;
                 }
-
-                ConfirmedBookings = await confirmedQuery.ToListAsync();
-
-                IQueryable<Booking> completeQuery = _context.Bookings
-                    .Where(b => b.UserId == UserId && (b.Status == "Completed" || b.Status == "Cancelled"))
-                    .Include(b => b.Room)
-                    .Include(b => b.Slot);
-
-                if (!string.IsNullOrWhiteSpace(SearchQuery))
-                {
-                    completeQuery = completeQuery.Where(b => b.Room.RoomName.Contains(SearchQuery));
-                }
-
-                var total = await completeQuery.CountAsync();
-                TotalPages = (int)Math.Ceiling(total / (double)PageSize);
-                CurrentPage = Math.Max(1, Math.Min(currentPage, TotalPages));
-
-                CompleteBookings = await completeQuery
-                    .Skip((CurrentPage - 1) * PageSize)
-                    .Take(PageSize)
-                    .ToListAsync();
             }
         }
 
-        public IActionResult OnPostCancelBooking(int bookingId)
+        public async Task<IActionResult> OnPostCancelBooking(int bookingId)
         {
-            var booking = _context.Bookings.FirstOrDefault(b => b.BookingId == bookingId);
-            if (booking == null)
+            var cancelUrl = $"{ApiBaseUrl}/cancel";
+            
+            var response = await _httpClient.PostAsJsonAsync(cancelUrl, new { BookingId = bookingId });
+
+            if (response.IsSuccessStatusCode)
             {
-                return NotFound();
+                return RedirectToPage();
             }
 
-            if (booking.Status == "Confirmed")
-            {
-                booking.Status = "Cancelled";
-                _context.Bookings.Update(booking);
-                _context.SaveChanges();
-            }
-
-            return RedirectToPage();
+            return BadRequest("Failed to cancel booking.");
         }
     }
+
+    public class PagedResult<T>
+    {
+        public List<T> Items { get; set; } = new();
+        public int TotalPages { get; set; }
+        public int CurrentPage { get; set; }
+    }
 }
-    
