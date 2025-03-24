@@ -17,6 +17,8 @@ builder.Services.AddHttpClient("FAPCL", client =>
     client.BaseAddress = new Uri("https://localhost:5001/api/");
 });
 builder.Services.AddSession();
+builder.Services.AddSignalR();
+
 
 var app = builder.Build();
 
