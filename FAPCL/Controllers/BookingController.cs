@@ -1,4 +1,6 @@
-﻿using FAPCL.DTO;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using FAPCL.DTO;
 using FAPCL.Model;
 using FAPCL.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +21,13 @@ namespace FAPCL.Controllers
         [HttpPost("createBooking")]
         public async Task<IActionResult> CreateBooking([FromBody] BookingRequest request)
         {
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            // Lấy User ID và Role từ claim
+            var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+            request.UserId = userId;
             var result = await bookingService.CreateBooking(request);
             return result != null ? Ok(result) : BadRequest("Failed to create booking");
         }
@@ -27,7 +36,12 @@ namespace FAPCL.Controllers
         public async Task<IActionResult> GetBookingDetails(int currentPage = 1, string searchQuery = "")
         {
             var isAdmin = true;
-            var userId = 1.ToString();
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            // Lấy User ID và Role từ claim
+            var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             var result = await bookingService.GetBookingDetails(userId, isAdmin, currentPage, searchQuery);
             return Ok(result);
         }
@@ -36,7 +50,12 @@ namespace FAPCL.Controllers
         public async Task<IActionResult> GetBookingCompleteds(int currentPage = 1, string searchQuery = "")
         {
             var isAdmin = true;
-            var userId = 1.ToString();
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            // Lấy User ID và Role từ claim
+            var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             var result = await bookingService.GetBookingCompleteds(userId, currentPage, searchQuery);
             return Ok(result);
         }
@@ -45,7 +64,12 @@ namespace FAPCL.Controllers
         public async Task<IActionResult> GetBookingConfirmeds(string searchQuery = "")
         {
             var isAdmin = true;
-            var userId = 1.ToString();
+            var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            // Lấy User ID và Role từ claim
+            var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             var result = await bookingService.GetBookingConfirmeds(userId, searchQuery);
             return Ok(result);
         }
