@@ -82,6 +82,8 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<ISlotService, SlotService>();
+builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 
 builder.Services.AddControllers();
 
