@@ -127,39 +127,47 @@
         <a class="btn btn-primary" asp-page="Create">Create New Classroom</a>
     </div>
 
-    <div class="row">
-        @foreach (var item in Model.Room)
-        {
-            <div class="col-md-4 col-sm-6 mb-4">
-                <div class="card @(item.IsAction == false ? "faded-card" : "")">
-                    <div class="card-body">
-                        <h5 class="card-title">@item.RoomName</h5>
-                        <p class="card-text">
-                            <strong>Capacity:</strong> @item.Capacity<br>
-                            <strong>Room Type:</strong> @item.RoomType.RoomType1<br>
-                            <strong>Has Projector:</strong> @(item.HasProjector.GetValueOrDefault() ? "Yes" : "No")<br>
-                            <strong>Has Sound System:</strong> @(item.HasSoundSystem.GetValueOrDefault() ? "Yes" : "No")<br>
-                            <strong>Status:</strong>
-                            <span class="badge bg-@(item.Status == "Available" ? "success" : item.Status == "Booked" ? "warning" : "danger")">
-                                @item.Status
+    @if (Model.Room != null && Model.Room.Any())
+    {
+        <div class="row">
+            @foreach (var item in Model.Room)
+            {
+                <div class="col-md-4 col-sm-6 mb-4">
+                    <div class="card @(item.IsAction == false ? "faded-card" : "")">
+                        <div class="card-body">
+                            <h5 class="card-title">@item.RoomName</h5>
+                            <p class="card-text">
+                                <strong>Capacity:</strong> @item.Capacity<br>
+                                <strong>Room Type:</strong> @(item.RoomType != null ? item.RoomType.RoomType1 : "N/A")<br>
+                                <strong>Has Projector:</strong> @(item.HasProjector.GetValueOrDefault() ? "Yes" : "No")<br>
+                                <strong>Has Sound System:</strong> @(item.HasSoundSystem.GetValueOrDefault() ? "Yes" : "No")<br>
+                                <strong>Status:</strong>
+                                <span class="badge bg-@(item.Status == "Available" ? "success" : item.Status == "Booked" ? "warning" : "danger")">
+                                @(item.Status ?? "Unknown")
                             </span>
-                        </p>
-                        <div class="d-flex justify-content-between">
-                            <a class="btn btn-outline-primary btn-sm" asp-page="./Edit" asp-route-id="@item.RoomId">Edit Classroom</a>
-                            @if (item.Status != "Booked" && item.Status != "InUse")
-                            {
-                                <form method="post" asp-page-handler="ToggleVisibility" asp-route-roomId="@item.RoomId" class="mb-0">
-                                    <button type="submit" class="btn btn-outline-info btn-sm">
-                                        @(item.IsAction == true ? "Hide" + " Classroom" : "Show" + " Classroom")
-                                    </button>
-                                </form>
-                            }
+                            </p>
+                            <div class="d-flex justify-content-between">
+                                <a class="btn btn-outline-primary btn-sm" asp-page="./Edit" asp-route-id="@item.RoomId">Edit Classroom</a>
+                                @if (!string.IsNullOrEmpty(item.Status) && item.Status != "Booked" && item.Status != "InUse")
+                                {
+                                    <form method="post" asp-page-handler="ToggleVisibility" asp-route-roomId="@item.RoomId" class="mb-0">
+                                        <button type="submit" class="btn btn-outline-info btn-sm">
+                                            @(item.IsAction == true ? "Hide" : "Show") Classroom
+                                        </button>
+                                    </form>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>No classrooms available.</p>
+    }
+
 
     <!-- Pagination -->
     <div class="mt-4">
