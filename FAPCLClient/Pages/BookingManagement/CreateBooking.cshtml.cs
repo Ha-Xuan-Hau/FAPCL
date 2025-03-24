@@ -1,15 +1,20 @@
-using BookClassRoom.Models;
-using FAPCL.Model;
+using FAPCLClient.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace BookClassRoom.Pages.BookingManagement
 {
     public class CreateBookingModel : PageModel
     {
-        private readonly BookClassRoomContext _context;
+        private readonly HttpClient _httpClient;
         private readonly UserManager<AspNetUser> _userManager;
+        
+        private const string ApiBaseUrl = "http://localhost:5043/api";
 
         [BindProperty(SupportsGet = true)]
         public int RoomId { get; set; }
@@ -19,19 +24,21 @@ namespace BookClassRoom.Pages.BookingManagement
 
         [BindProperty(SupportsGet = true)]
         public DateTime SelectedDate { get; set; } = DateTime.Now.Date;
+
         public Room RoomDetails { get; set; } = new Room();
         public Slot SlotDetails { get; set; } = new Slot();
         public string UserId { get; set; }
 
         [BindProperty]
         public string Purpose { get; set; }
-        public CreateBookingModel(BookClassRoomContext context, UserManager<AspNetUser> userManager)
+
+        public CreateBookingModel(HttpClient httpClient, UserManager<AspNetUser> userManager)
         {
-            _context = context;
+            _httpClient = httpClient;
             _userManager = userManager;
         }
 
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGet()
         {
             UserId = _userManager.GetUserId(User);
 
@@ -40,41 +47,63 @@ namespace BookClassRoom.Pages.BookingManagement
                 return RedirectToPage("/Account/Login", new { area = "Identity" });
             }
 
-            RoomDetails = _context.Rooms
-               .Where(r => r.RoomId == RoomId)
-               .Select(r => new Room
-               {
-                   RoomName = r.RoomName,
-                   RoomType = r.RoomType,
-                   Capacity = r.Capacity
-               })
-               .FirstOrDefault();
-            SlotDetails = _context.Slots.FirstOrDefault(s => s.SlotId == SlotId);
-            
+            // Gọi API lấy thông tin phòng
+            var roomResponse = await _httpClient.GetAsync($"{ApiBaseUrl}/Room/{RoomId}");
+            if (roomResponse.IsSuccessStatusCode)
+            {
+                RoomDetails = await roomResponse.Content.ReadFromJsonAsync<Room>() ?? new Room();
+            }
+            else
+            {
+                return NotFound("Room not found");
+            }
+
+            // Gọi API lấy thông tin slot
+            var slotResponse = await _httpClient.GetAsync($"{ApiBaseUrl}/Slot/{SlotId}");
+            if (slotResponse.IsSuccessStatusCode)
+            {
+                SlotDetails = await slotResponse.Content.ReadFromJsonAsync<Slot>() ?? new Slot();
+            }
+            else
+            {
+                return NotFound("Slot not found");
+            }
+
             return Page();
         }
-        public IActionResult OnPost()
+
+        public async Task<IActionResult> OnPost()
         {
             UserId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(UserId))
             {
                 return RedirectToPage("/Account/Login", new { area = "Identity" });
             }
-            var newBooking = new Booking
+
+            var newBooking = new
             {
                 RoomId = RoomId,
                 SlotId = SlotId,
-                SlotBookingDate = SelectedDate,
-                BookingDate = DateTime.Now,
+                SelectedDate = SelectedDate,
                 UserId = UserId,
-                Purpose = Purpose,
-                Status = "Confirmed"
+                Purpose = Purpose
             };
-            _context.Bookings.Add(newBooking);
-            _context.SaveChanges();
-            TempData["SuccessMessage"] = "Booking Successfully!";
 
-            return RedirectToPage("/BookingManagement/Index");
+            var jsonContent = new StringContent(JsonSerializer.Serialize(newBooking), Encoding.UTF8, "application/json");
+
+            // Gọi API để tạo booking
+            var response = await _httpClient.PostAsync($"{ApiBaseUrl}/Booking/createBooking", jsonContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                TempData["SuccessMessage"] = "Booking Successfully!";
+                return RedirectToPage("/BookingManagement/Index");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to create booking!";
+                return Page();
+            }
         }
     }
 }

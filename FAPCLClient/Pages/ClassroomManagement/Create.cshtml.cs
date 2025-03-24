@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using BookClassRoom.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using FAPCL.Model;
+using FAPCLClient.Model;
 
 namespace BookClassRoom.Pages.ClassroomManagement
 {
     public class CreateModel : PageModel
     {
-        private readonly BookClassRoomContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IHubContext<SignalRServer> _hubContext;
-        public CreateModel(BookClassRoomContext context, IHubContext<SignalRServer> hubContext)
+        private readonly string _apiBaseUrl = "http://localhost:5043/api"; // Thay đổi URL nếu cần
+
+        public CreateModel(IHttpClientFactory httpClientFactory, IHubContext<SignalRServer> hubContext)
         {
-            _context = context;
+            _httpClientFactory = httpClientFactory;
             _hubContext = hubContext;
         }
 
@@ -29,37 +26,51 @@ namespace BookClassRoom.Pages.ClassroomManagement
 
         public async Task<IActionResult> OnGetAsync()
         {
-            RoomTypeOptions = new SelectList(await _context.RoomTypes.ToListAsync(), "RoomTypeId", "RoomType1");
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.GetFromJsonAsync<List<RoomType>>($"{_apiBaseUrl}/RoomType/roomtypes");
+
+            if (response == null)
+            {
+                ModelState.AddModelError("", "Không thể tải danh sách loại phòng.");
+                return Page();
+            }
+
+            RoomTypeOptions = new SelectList(response, "RoomTypeId", "RoomType1");
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-
             if (Room.Capacity <= 0)
             {
                 ModelState.AddModelError("Room.Capacity", "Capacity must be greater than 0.");
-                RoomTypeOptions = new SelectList(await _context.RoomTypes.ToListAsync(), "RoomTypeId", "RoomType1");
+                await OnGetAsync(); // Load lại RoomTypeOptions
                 return Page();
             }
 
-            var newRoom = new Room
+            var newRoom = new Room()
             {
                 RoomName = Room.RoomName,
                 Capacity = Room.Capacity,
                 RoomTypeId = Room.RoomTypeId,
-                HasProjector = Room.HasProjector ?? false, 
-                HasSoundSystem = Room.HasSoundSystem ?? false, 
-                Status = "Available", 
-                IsAction = true 
+                HasProjector = Room.HasProjector ?? false,
+                HasSoundSystem = Room.HasSoundSystem ?? false,
+                Status = "Available",
+                IsAction = true
             };
 
-            _context.Rooms.Add(newRoom);
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync($"{_apiBaseUrl}/Room/admin/room/add", newRoom);
 
-            await _context.SaveChangesAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError("", "Không thể thêm phòng.");
+                await OnGetAsync(); // Load lại RoomTypeOptions
+                return Page();
+            }
+
             await _hubContext.Clients.All.SendAsync("LoadRoom");
             return RedirectToPage("/ClassroomManagement/Index");
         }
-
     }
 }

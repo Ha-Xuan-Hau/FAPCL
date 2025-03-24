@@ -1,54 +1,67 @@
 ﻿using FAPCL.DTO;
+using FAPCL.Model;
 using FAPCL.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FAPCL.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BookingController : ControllerBase
+    public class BookingController(IBookingService bookingService) : ControllerBase
     {
-        private readonly IBookingService _bookingService;
-
-        public BookingController(IBookingService bookingService)
-        {
-            _bookingService = bookingService;
-        }
-        
         [HttpGet("{roomId}/{slotId}")]
         public async Task<IActionResult> GetBookingDetails(int roomId, int slotId, DateTime selectedDate)
         {
-            var result = await _bookingService.GetBookingDetails(roomId, slotId, selectedDate);
+            var result = await bookingService.GetBookingDetails(roomId, slotId, selectedDate);
             return result != null ? Ok(result) : NotFound("Booking details not found");
         }
         
         [HttpPost("createBooking")]
         public async Task<IActionResult> CreateBooking([FromBody] BookingRequest request)
         {
-            var result = await _bookingService.CreateBooking(request);
+            var result = await bookingService.CreateBooking(request);
             return result != null ? Ok(result) : BadRequest("Failed to create booking");
         }
         
         [HttpGet("details")]
-        public async Task<IActionResult> GetBookingDetails(string userId, bool isAdmin, int currentPage = 1, string searchQuery = "")
+        public async Task<IActionResult> GetBookingDetails(int currentPage = 1, string searchQuery = "")
         {
-            var result = await _bookingService.GetBookingDetails(userId, isAdmin, currentPage, searchQuery);
+            var isAdmin = true;
+            var userId = 1.ToString();
+            var result = await bookingService.GetBookingDetails(userId, isAdmin, currentPage, searchQuery);
+            return Ok(result);
+        }
+        
+        [HttpGet("completed")]
+        public async Task<IActionResult> GetBookingCompleteds(int currentPage = 1, string searchQuery = "")
+        {
+            var isAdmin = true;
+            var userId = 1.ToString();
+            var result = await bookingService.GetBookingCompleteds(userId, currentPage, searchQuery);
+            return Ok(result);
+        }
+        
+        [HttpGet("confirmed")]
+        public async Task<IActionResult> GetBookingConfirmeds(string searchQuery = "")
+        {
+            var isAdmin = true;
+            var userId = 1.ToString();
+            var result = await bookingService.GetBookingConfirmeds(userId, searchQuery);
             return Ok(result);
         }
         
         [HttpPost("cancel")]
         public async Task<IActionResult> CancelBooking([FromBody] CancelBookingRequest request)
         {
-            bool isCanceled = await _bookingService.CancelBooking(request);
-            return isCanceled ? Ok("Booking canceled successfully") : BadRequest("Failed to cancel booking");
-        }
+            Booking? booking = await bookingService.GetBookingDetails(request.BookingId);
 
-        [HttpGet("admin/list")]
-        public async Task<IActionResult> GetAllBookings()
-        {
-            var listBookings = await _bookingService.GetAllBookings();
-            return Ok(listBookings);
+            if (booking == null)
+            {
+                return NotFound("Booking not found");
+            }
+
+            bool isCanceled = await bookingService.CancelBooking(booking);
+            return isCanceled ? Ok("Booking canceled successfully") : BadRequest("Failed to cancel booking");
         }
     }
 }

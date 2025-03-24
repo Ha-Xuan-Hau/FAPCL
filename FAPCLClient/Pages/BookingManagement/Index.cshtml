@@ -81,17 +81,15 @@
                         @foreach (var slot in Model.Slots)
                         {
                             <td class="text-center">
-                                @if (Model.IsSlotAvailable(room.RoomId, slot.SlotId, Model.SelectedDate))
+                                @if (Model.SlotAvailability.TryGetValue((room.RoomId, slot.SlotId), out bool isAvailable) && isAvailable)
                                 {
                                     <a href="/BookingManagement/CreateBooking?roomId=@room.RoomId&slotId=@slot.SlotId&SelectedDate=@Model.SelectedDate.ToString("yyyy-MM-dd")">
                                         <i class="bi bi-calendar-plus" style="font-size: 1.2rem; margin-right: 5px;"></i> 
                                     </a>
-
                                 }
                                 else
                                 {
                                     <span class="text-muted">🔒</span>
-
                                 }
                             </td>
                         }

@@ -17,17 +17,27 @@ namespace FAPCL.Services
             _userManager = userManager;
         }
 
-        public async Task<Booking> GetBookingDetails(int roomId, int slotId, DateTime selectedDate)
+        public async Task<Booking?> GetBookingDetails(int roomId, int? slotId, DateTime? selectedDate)
         {
-            var booking = await _context.Bookings
+            var query = _context.Bookings
                 .Include(b => b.Room)
                 .Include(b => b.Slot)
-                .FirstOrDefaultAsync(b => b.RoomId == roomId && b.SlotId == slotId && b.SlotBookingDate.Date == selectedDate.Date);
+                .Where(b => b.RoomId == roomId);
 
-            return booking;
+            if (slotId.HasValue)
+            {
+                query = query.Where(b => b.SlotId == slotId.Value);
+            }
+
+            if (selectedDate.HasValue)
+            {
+                query = query.Where(b => b.SlotBookingDate.Date == selectedDate.Value.Date);
+            }
+
+            return await query.FirstOrDefaultAsync();
         }
 
-        public async Task<Booking> CreateBooking(BookingRequest request)
+        public async Task<Booking?> CreateBooking(BookingRequest request)
         {
             var newBooking = new Booking
             {
@@ -65,20 +75,10 @@ namespace FAPCL.Services
 
             IQueryable<Booking> query;
 
-            if (isAdmin)
-            {
-                query = _context.Bookings
-                    .Include(b => b.Room)
-                    .Include(b => b.Slot)
-                    .Include(b => b.User);
-            }
-            else
-            {
-                query = _context.Bookings
-                    .Where(b => b.UserId == userId)
-                    .Include(b => b.Room)
-                    .Include(b => b.Slot);
-            }
+            query = _context.Bookings
+                .Include(b => b.Room)
+                .Include(b => b.Slot)
+                .Include(b => b.User);
 
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
@@ -88,11 +88,72 @@ namespace FAPCL.Services
             return await query.ToListAsync();
         }
 
-        public async Task<bool> CancelBooking(CancelBookingRequest request)
+        public async Task<IEnumerable<Booking>> GetBookingCompleteds(string userId, int currentPage, string searchQuery)
         {
-            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
-            if (booking == null) return false;
+            var currentTime = DateTime.Now;
+            var currentTimeOfDay = currentTime.TimeOfDay;
 
+            var bookingsToUpdate = _context.Bookings
+                .Where(b => b.SlotBookingDate <= currentTime
+                            && b.Slot.EndTime < currentTimeOfDay
+                            && b.Status == "Confirmed")
+                .ToList();
+
+            foreach (var booking in bookingsToUpdate)
+            {
+                booking.Status = "Completed";
+            }
+            await _context.SaveChangesAsync();
+
+            IQueryable<Booking> query;
+
+            query = _context.Bookings
+                .Where(b => b.UserId == userId && b.Status == "Completed")
+                .Include(b => b.Room)
+                .Include(b => b.Slot);
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                query = query.Where(b => b.Room.RoomName.Contains(searchQuery));
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<IEnumerable<Booking>> GetBookingConfirmeds(string userId, string searchQuery)
+        {
+            var currentTime = DateTime.Now;
+            var currentTimeOfDay = currentTime.TimeOfDay;
+
+            var bookingsToUpdate = _context.Bookings
+                .Where(b => b.SlotBookingDate <= currentTime
+                            && b.Slot.EndTime < currentTimeOfDay
+                            && b.Status == "Confirmed")
+                .ToList();
+
+            foreach (var booking in bookingsToUpdate)
+            {
+                booking.Status = "Completed";
+            }
+            await _context.SaveChangesAsync();
+
+            IQueryable<Booking> query;
+
+            query = _context.Bookings
+                .Where(b => b.UserId == userId  && b.Status == "Confirmed")
+                .Include(b => b.Room)
+                .Include(b => b.Slot);
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                query = query.Where(b => b.Room.RoomName.Contains(searchQuery));
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<bool> CancelBooking(Booking booking)
+        {
             if (booking.Status == "Confirmed")
             {
                 booking.Status = "Cancelled";

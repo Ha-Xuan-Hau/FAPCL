@@ -1,70 +1,107 @@
 using BookClassRoom.Hubs;
-using FAPCL.Model;
+using FAPCLClient.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Text.Json;
 
 namespace BookClassRoom.Pages.RoomTypeManagement
 {
     public class RoomTypeModel : PageModel
     {
-        private readonly BookClassRoomContext _context;
         private readonly UserManager<AspNetUser> _userManager;
         private readonly IHubContext<SignalRServer> _signalRHub;
+        private readonly HttpClient _httpClient;
+
         [BindProperty]
         public RoomType RoomType { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public string SearchQuery { get; set; }
 
-        public RoomTypeModel(UserManager<AspNetUser> userManager, BookClassRoomContext context, IHubContext<SignalRServer> signalRHub)
+        public RoomTypeModel(UserManager<AspNetUser> userManager, IHubContext<SignalRServer> signalRHub, IHttpClientFactory httpClientFactory)
         {
-            _context = context;
             _userManager = userManager;
             _signalRHub = signalRHub;
+            _httpClient = httpClientFactory.CreateClient();
+            _httpClient.BaseAddress = new Uri("http://localhost:5043/api/RoomType/");
         }
 
         public List<RoomType> RoomTypes { get; set; } = new List<RoomType>();
 
         public async Task OnGetAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            IQueryable<RoomType> query = _context.RoomTypes;
-
-            if (!string.IsNullOrEmpty(SearchQuery))
+            try
             {
-                query = query.Where(c => c.RoomType1.Contains(SearchQuery));
+                var response = await _httpClient.GetAsync("");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    var roomTypes = JsonSerializer.Deserialize<List<RoomType>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    RoomTypes = roomTypes ?? new List<RoomType>();
+
+                    if (!string.IsNullOrEmpty(SearchQuery))
+                    {
+                        RoomTypes = RoomTypes.Where(c => c.RoomType1.Contains(SearchQuery)).ToList();
+                    }
+                }
             }
-
-            RoomTypes = await query.ToListAsync();
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Lỗi khi tải dữ liệu: " + ex.Message);
+            }
         }
-
-
 
         public async Task<IActionResult> OnPostCreate(RoomType roomType)
         {
+            try
+            {
+                var json = JsonSerializer.Serialize(roomType);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync("", content);
 
-            var user = await _userManager.GetUserAsync(User);
-            _context.RoomTypes.Add(roomType);
-            await _context.SaveChangesAsync();
-            return RedirectToPage();
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToPage();
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "Không thể thêm RoomType.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Lỗi khi tạo RoomType: " + ex.Message);
+            }
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostUpdate(RoomType roomType)
         {
-            var existingRoomType = await _context.RoomTypes.FindAsync(roomType.RoomTypeId);
-            if (existingRoomType != null)
+            try
             {
-                roomType.RoomTypeId = existingRoomType.RoomTypeId;
-                existingRoomType.RoomType1 = roomType.RoomType1;
-                existingRoomType.Description = roomType.Description;
-                await _context.SaveChangesAsync();
+                var json = JsonSerializer.Serialize(roomType);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PutAsync($"{roomType.RoomTypeId}", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToPage();
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, $"Không thể cập nhật RoomType {roomType.RoomTypeId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, "Lỗi khi cập nhật RoomType: " + ex.Message);
             }
 
-            return RedirectToPage();
+            return Page();
         }
     }
 }

@@ -1,25 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using BookClassRoom.Hubs;
+using FAPCLClient.Model;
 using Microsoft.AspNetCore.SignalR;
-using FAPCL.Model;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace BookClassRoom.Pages.ClassroomManagement
 {
     public class EditModel : PageModel
     {
-        private readonly BookClassRoomContext _context;
         private readonly IHubContext<SignalRServer> _hubContext;
-        public EditModel(BookClassRoomContext context, IHubContext<SignalRServer> hubContext)
+        private readonly HttpClient _httpClient;
+        private const string ApiBaseUrl = "http://localhost:5043/api/room";
+
+        public EditModel(IHubContext<SignalRServer> hubContext, IHttpClientFactory httpClientFactory)
         {
-            _context = context;
             _hubContext = hubContext;
+            _httpClient = httpClientFactory.CreateClient();
         }
 
         [BindProperty]
@@ -29,38 +31,33 @@ namespace BookClassRoom.Pages.ClassroomManagement
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            Room = await _context.Rooms.Include(r => r.RoomType).FirstOrDefaultAsync(r => r.RoomId == id);
-
-            if (Room == null)
+            var response = await _httpClient.GetAsync($"{ApiBaseUrl}/admin/room/{id}");
+            if (!response.IsSuccessStatusCode)
             {
                 return NotFound();
             }
+            Room = await response.Content.ReadFromJsonAsync<Room>();
 
-            RoomTypeOptions = new SelectList(await _context.RoomTypes.ToListAsync(), "RoomTypeId", "RoomType1");
+            var roomTypesResponse = await _httpClient.GetAsync($"{ApiBaseUrl}/roomtypes");
+            if (roomTypesResponse.IsSuccessStatusCode)
+            {
+                var roomTypes = await roomTypesResponse.Content.ReadFromJsonAsync<List<RoomType>>();
+                RoomTypeOptions = new SelectList(roomTypes, "RoomTypeId", "RoomType1");
+            }
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            
+            var jsonContent = new StringContent(JsonSerializer.Serialize(Room), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PutAsync($"{ApiBaseUrl}/admin/room/{Room.RoomId}", jsonContent);
 
-            var existingRoom = await _context.Rooms.FirstOrDefaultAsync(r => r.RoomId == Room.RoomId);
-
-            if (existingRoom != null)
+            if (!response.IsSuccessStatusCode)
             {
-                existingRoom.RoomName = Room.RoomName;
-                existingRoom.Capacity = Room.Capacity;
-                existingRoom.RoomTypeId = Room.RoomTypeId;
-                existingRoom.HasProjector = Room.HasProjector ?? false;
-                existingRoom.HasSoundSystem = Room.HasSoundSystem ?? false;
-                existingRoom.Status = existingRoom.Status; 
-                existingRoom.IsAction = existingRoom.IsAction ?? existingRoom.IsAction;
-
-                await _context.SaveChangesAsync();
+                return BadRequest("Failed to update room");
             }
             await _hubContext.Clients.All.SendAsync("LoadRoom");
             return RedirectToPage("/ClassroomManagement/Index");
         }
-
     }
 }
