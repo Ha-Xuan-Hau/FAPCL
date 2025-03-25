@@ -15,10 +15,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//builder.WebHost.ConfigureKestrel(options =>{
- //   options.ListenAnyIP(5000);
-  //  options.ListenAnyIP(5001, listenOptions => listenOptions.UseHttps());});
-
 // Cấu hình DbContext và Identity
 builder.Services.AddDbContext<BookClassRoomContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -26,8 +22,9 @@ builder.Services.AddDbContext<BookClassRoomContext>(options =>
 // Cấu hình Identity với đầy đủ các dịch vụ cho AspNetUser và AspNetRole
 builder.Services.AddIdentity<AspNetUser, IdentityRole>()
     .AddEntityFrameworkStores<BookClassRoomContext>()
-    .AddDefaultTokenProviders(); // Đảm bảo có DefaultTokenProviders cho các tính năng như xác thực mật khẩu, xác minh email, v.v.
+    .AddDefaultTokenProviders();
 
+// Cấu hình EmailSettings và EmailSender
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
@@ -42,11 +39,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = jwtSettings["Issuer"], // Lấy từ cấu hình
+            ValidIssuer = jwtSettings["Issuer"],
             ValidateAudience = true,
-            ValidAudience = jwtSettings["Audience"], // Lấy từ cấu hình
+            ValidAudience = jwtSettings["Audience"],
             ValidateLifetime = true,
-            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"])) // Lấy từ cấu hình
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"]))
         };
     });
 
@@ -98,13 +95,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+app.UseAuthentication(); // Enable Authentication Middleware
+app.UseAuthorization();  // Enable Authorization Middleware
 
-app.UseAuthentication(); // Add this line to enable authentication
-app.UseAuthorization();  // Add this line to enable authorization
-
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-});
+app.MapControllers(); // Automatically maps the controllers
 
 app.Run();
