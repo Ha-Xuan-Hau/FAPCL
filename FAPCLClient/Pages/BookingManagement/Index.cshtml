@@ -53,7 +53,7 @@
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-search"></i> 
+                    <i class="fas fa-search">Search</i> 
                 </button>
 
             </div>
@@ -81,10 +81,11 @@
                         @foreach (var slot in Model.Slots)
                         {
                             <td class="text-center">
-                                @if (Model.SlotAvailability.TryGetValue((room.RoomId, slot.SlotId), out bool isAvailable) && isAvailable)
+                                    @if (Model.SlotAvailability.TryGetValue((room.RoomId, slot.SlotId), out bool isAvailable)  && isAvailable
+                                   && Model.SelectedDate.Add(slot.StartTime) >= DateTime.Now)
                                 {
                                     <a href="/BookingManagement/CreateBooking?roomId=@room.RoomId&slotId=@slot.SlotId&SelectedDate=@Model.SelectedDate.ToString("yyyy-MM-dd")">
-                                        <i class="bi bi-calendar-plus" style="font-size: 1.2rem; margin-right: 5px;"></i> 
+                                        <i class="bi bi-calendar-plus" style="font-size: 1.2rem; margin-right: 5px;">Book</i> 
                                     </a>
                                 }
                                 else
