@@ -46,18 +46,27 @@ namespace FAPCL.Services
             var currentTime = DateTime.Now.TimeOfDay;
             var currentDate = DateTime.Now.Date;
 
-            bool isBooked = await _context.Bookings
-                .AnyAsync(b => b.RoomId == roomId &&
-                               b.SlotId == slotId &&
-                               b.SlotBookingDate == selectedDate &&
-                               b.Status == "Confirmed");
+            var existingBooking = _context.Bookings
+                .Where(b => b.RoomId == roomId
+                            && b.SlotId == slotId
+                            && b.SlotBookingDate == selectedDate
+                            && b.Status == "Confirmed")
+                .FirstOrDefault();
 
-            if (isBooked) return false;
+            if (existingBooking != null)
+            {
+                return false;
+            }
 
             if (selectedDate.Date == currentDate)
             {
-                var slot = await _context.Slots.FirstOrDefaultAsync(s => s.SlotId == slotId);
-                return slot != null && slot.StartTime > currentTime;
+                var slot = _context.Slots.FirstOrDefault(s => s.SlotId == slotId);
+                if (slot != null && slot.StartTime > currentTime)
+                {
+                    return true;
+                }
+
+                return false;
             }
 
             return true;
