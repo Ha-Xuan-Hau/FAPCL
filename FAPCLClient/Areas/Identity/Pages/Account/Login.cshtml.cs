@@ -66,7 +66,7 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
             var json = JsonSerializer.Serialize(loginData);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync("https://localhost:5001/api/User/login", content);
+            var response = await _httpClient.PostAsync("https://localhost:7007/api/User/login", content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -106,6 +106,7 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
                 // Lưu thông tin người dùng vào Session
                 HttpContext.Session.SetString("UserName", user.UserName);
                 HttpContext.Session.SetString("UserEmail", user.Email);
+                HttpContext.Session.SetString("Token", tokenResponse.token);
 
                 await _context.SaveChangesAsync();
 

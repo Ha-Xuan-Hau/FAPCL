@@ -89,7 +89,7 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             // Gửi yêu cầu đăng ký đến API
-            var response = await _httpClient.PostAsync("https://localhost:5001/api/User/register", content);
+            var response = await _httpClient.PostAsync("https://localhost:7007/api/User/register", content);
 
             if (response.IsSuccessStatusCode)
             {

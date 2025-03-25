@@ -2,15 +2,13 @@
 @inject IHttpContextAccessor HttpContextAccessor
 
 <ul class="navbar-nav">
-    @if (HttpContextAccessor.HttpContext.Session.GetString("UserName") != null)
+    @if (HttpContextAccessor.HttpContext.Session.GetString("Token") != null) 
     {
         <li class="nav-item">
             <span class="nav-link text-dark">Hello, @HttpContextAccessor.HttpContext.Session.GetString("UserName")!</span>
         </li>
         <li class="nav-item">
-            <form id="logoutForm" class="form-inline" asp-area="Identity" asp-page="/Account/Logout">
-                <button id="logout" type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
-            </form>
+            <button id="logout" class="nav-link btn btn-link text-dark border-0">Logout</button>
         </li>
     }
     else
@@ -23,3 +21,20 @@
         </li>
     }
 </ul>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Kiểm tra nếu có nút logout
+            var logoutButton = document.getElementById("logout");
+            if (logoutButton) {
+                logoutButton.addEventListener("click", function () {
+                    // Xóa token khỏi HttpContext.Session hoặc sessionStorage
+                    sessionStorage.removeItem('Token'); // Hoặc sử dụng HttpContext.Session nếu bạn cần phía server
+                    console.log("Logging out...");
+                    location.reload(); // Làm mới trang để cập nhật giao diện
+                });
+            }
+        });
+    </script>
+}

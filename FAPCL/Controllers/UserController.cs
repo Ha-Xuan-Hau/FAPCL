@@ -118,5 +118,29 @@ namespace FAPCL.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        [HttpGet("userinfo")]
+        public async Task<IActionResult> GetUserInfo()
+        {         
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+            if (userId == null)
+            {
+                return Unauthorized(new { Message = "Token không hợp lệ." });
+            }            
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found." });
+            }        
+            return Ok(new
+            {
+                user.Id,
+                user.UserName,
+                user.Email,
+                user.FirstName,
+                user.LastName,
+                user.PhoneNumber,
+                user.Address
+            });
+        }
     }
 }
