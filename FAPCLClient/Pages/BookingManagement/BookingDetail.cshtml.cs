@@ -14,18 +14,18 @@ namespace FAPCLClient.Pages.BookingManagement
         {
             _httpClient = httpClientFactory.CreateClient();
 
-            ConfirmedBookings = new List<Booking>();
-            CompleteBookings = new List<Booking>();
-            AllBookings = new List<Booking>();
+            ConfirmedBookings = new List<BookingDTO>();
+            CompleteBookings = new List<BookingDTO>();
+            AllBookings = new List<BookingDTO>();
             Rooms = new List<Room>();
             SearchQuery = string.Empty;
         }
 
         public string? Token { get; set; }
         public bool IsAdmin { get; set; }
-        public List<Booking> ConfirmedBookings { get; set; }
-        public List<Booking> CompleteBookings { get; set; }
-        public List<Booking> AllBookings { get; set; }
+        public List<BookingDTO> ConfirmedBookings { get; set; }
+        public List<BookingDTO> CompleteBookings { get; set; }
+        public List<BookingDTO> AllBookings { get; set; }
         public List<Room> Rooms { get; set; }
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
@@ -39,35 +39,42 @@ namespace FAPCLClient.Pages.BookingManagement
         {
             Token = HttpContext.Session.GetString("Token");
             IsAdmin = User.IsInRole("Admin");
-            
+
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
 
-            if (IsAdmin)
+            try
             {
-                var url = $"{ApiBaseUrl}/details?currentPage={currentPage}&searchQuery={SearchQuery}";
-                var result = await _httpClient.GetFromJsonAsync<PagedResult<Booking>>(url);
-
-                if (result != null)
+                if (IsAdmin)
                 {
-                    AllBookings = result.Items;
-                    TotalPages = result.TotalPages;
-                    CurrentPage = result.CurrentPage;
+                    var url = $"{ApiBaseUrl}/details?currentPage={currentPage}&searchQuery={SearchQuery}";
+                    var result = await _httpClient.GetFromJsonAsync<List<BookingDTO>>(url);
+
+                    if (result != null)
+                    {
+                        AllBookings = result;
+                    }
+                }
+                else
+                {
+                    var confirmedUrl = $"{ApiBaseUrl}/confirmed?searchQuery={SearchQuery}";
+                    ConfirmedBookings = await _httpClient.GetFromJsonAsync<List<BookingDTO>>(confirmedUrl) ?? new List<BookingDTO>();
+
+                    var completedUrl = $"{ApiBaseUrl}/completed?searchQuery={SearchQuery}&currentPage={currentPage}";
+                    var result = await _httpClient.GetFromJsonAsync<List<BookingDTO>>(completedUrl);
+
+                    if (result != null)
+                    {
+                        CompleteBookings = result;
+                    }
                 }
             }
-            else
+            catch (HttpRequestException ex)
             {
-                var confirmedUrl = $"{ApiBaseUrl}/confirmed?searchQuery={SearchQuery}";
-                ConfirmedBookings = await _httpClient.GetFromJsonAsync<List<Booking>>(confirmedUrl) ?? new List<Booking>();
+                // Log the exception (you can use a logging framework)
+                Console.Error.WriteLine($"Request error: {ex.Message}");
 
-                var completedUrl = $"{ApiBaseUrl}/completed?searchQuery={SearchQuery}&currentPage={currentPage}";
-                var result = await _httpClient.GetFromJsonAsync<PagedResult<Booking>>(completedUrl);
-
-                if (result != null)
-                {
-                    CompleteBookings = result.Items;
-                    TotalPages = result.TotalPages;
-                    CurrentPage = result.CurrentPage;
-                }
+                // Handle the error (e.g., set an error message to display in the UI)
+                ModelState.AddModelError(string.Empty, "An error occurred while fetching booking data. Please try again later.");
             }
         }
 
@@ -93,5 +100,19 @@ namespace FAPCLClient.Pages.BookingManagement
         public List<T> Items { get; set; } = new();
         public int TotalPages { get; set; } = totalPages;
         public int CurrentPage { get; set; } = currentPage;
+    }
+    
+    public class BookingDTO
+    {
+        public int BookingId { get; set; }
+        public int RoomId { get; set; }
+        public int SlotId { get; set; }
+        public string UserEmail { get; set; } = null!;
+        public string? Purpose { get; set; }
+        public DateTime? BookingDate { get; set; }
+        public DateTime SlotBookingDate { get; set; }
+        public string? Status { get; set; }
+        public string RoomName { get; set; }
+        public string SlotNumber { get; set; }
     }
 }

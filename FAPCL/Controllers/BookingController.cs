@@ -1,5 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using AutoMapper;
 using FAPCL.DTO;
 using FAPCL.Model;
 using FAPCL.Services;
@@ -9,7 +10,7 @@ namespace FAPCL.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BookingController(IBookingService bookingService) : ControllerBase
+    public class BookingController(IBookingService bookingService, IMapper mapper) : ControllerBase
     {
         [HttpGet("{roomId}/{slotId}")]
         public async Task<IActionResult> GetBookingDetails(int roomId, int slotId, DateTime selectedDate)
@@ -27,8 +28,7 @@ namespace FAPCL.Controllers
 
             // Lấy User ID và Role từ claim
             var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
-            request.UserId = userId;
-            var result = await bookingService.CreateBooking(request);
+            var result = await bookingService.CreateBooking(request, userId);
             return result != null ? Ok(result) : BadRequest("Failed to create booking");
         }
         
@@ -43,13 +43,13 @@ namespace FAPCL.Controllers
             // Lấy User ID và Role từ claim
             var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             var result = await bookingService.GetBookingDetails(userId, isAdmin, currentPage, searchQuery);
-            return Ok(result);
+            mapper.Map<IEnumerable<Booking>, IEnumerable<BookingDTO>>(result);
+            return Ok(mapper.Map<IEnumerable<Booking>, IEnumerable<BookingDTO>>(result));
         }
         
         [HttpGet("completed")]
         public async Task<IActionResult> GetBookingCompleteds(int currentPage = 1, string searchQuery = "")
         {
-            var isAdmin = true;
             var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
@@ -57,13 +57,13 @@ namespace FAPCL.Controllers
             // Lấy User ID và Role từ claim
             var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             var result = await bookingService.GetBookingCompleteds(userId, currentPage, searchQuery);
-            return Ok(result);
+            mapper.Map<IEnumerable<Booking>, IEnumerable<BookingDTO>>(result);
+            return Ok(mapper.Map<IEnumerable<Booking>, IEnumerable<BookingDTO>>(result));
         }
         
         [HttpGet("confirmed")]
         public async Task<IActionResult> GetBookingConfirmeds(string searchQuery = "")
         {
-            var isAdmin = true;
             var token = HttpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
@@ -71,7 +71,7 @@ namespace FAPCL.Controllers
             // Lấy User ID và Role từ claim
             var userId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
             var result = await bookingService.GetBookingConfirmeds(userId, searchQuery);
-            return Ok(result);
+            return Ok(mapper.Map<IEnumerable<Booking>, IEnumerable<BookingDTO>>(result));
         }
         
         [HttpPost("cancel")]

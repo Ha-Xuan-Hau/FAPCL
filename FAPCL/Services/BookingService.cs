@@ -37,7 +37,7 @@ namespace FAPCL.Services
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task<Booking?> CreateBooking(BookingRequest request)
+        public async Task<Booking?> CreateBooking(BookingRequest request, string userId)
         {
             var newBooking = new Booking
             {
@@ -45,7 +45,7 @@ namespace FAPCL.Services
                 SlotId = request.SlotId,
                 SlotBookingDate = request.SelectedDate,
                 BookingDate = DateTime.Now,
-                UserId = request.UserId,
+                UserId = userId,
                 Purpose = request.Purpose,
                 Status = "Confirmed"
             };

@@ -40,10 +40,10 @@
                             <td>@booking.BookingId</td>
                             @if (User.IsInRole("Admin"))
                             {
-                                <td>@booking.User.Email</td>
+                                <td>@booking.UserEmail</td>
                             }
-                            <td>@booking.Room.RoomName</td>
-                            <td>@booking.Slot.SlotName</td>
+                            <td>@booking.RoomName</td>
+                            <td>@booking.SlotNumber</td>
                             <td>@booking.SlotBookingDate.ToString("yyyy-MM-dd")</td>
                             <td>
                                 <span class="status
@@ -106,8 +106,8 @@
                     {
                         <tr>
                             <td>@booking.BookingId</td>
-                            <td>@booking.Room.RoomName</td>
-                            <td>@booking.Slot.SlotName</td>
+                            <td>@booking.RoomName</td>
+                            <td>@booking.SlotNumber</td>
                             <td>@booking.SlotBookingDate.ToString("yyyy-MM-dd")</td>
                             <td>
                                 <span class="status
@@ -149,8 +149,8 @@
                     {
                         <tr>
                             <td>@booking.BookingId</td>
-                            <td>@booking.Room.RoomName</td>
-                            <td>@booking.Slot.SlotName</td>
+                            <td>@booking.RoomName</td>
+                            <td>@booking.SlotNumber</td>
                             <td>@booking.SlotBookingDate.ToString("yyyy-MM-dd")</td>
                             <td>
                             <span class="status

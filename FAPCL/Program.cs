@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Ebay_Project_PRN.Helper;
+using FAPCL.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -82,6 +83,8 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISlotService, SlotService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 
+builder.Services.AddAutoMapper(typeof(MappingConfig));
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -99,6 +102,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication(); // Enable Authentication Middleware
 app.UseAuthorization();  // Enable Authorization Middleware
+
+app.UseCors("AllowSpecificOrigin");
 
 app.MapControllers(); // Automatically maps the controllers
 
