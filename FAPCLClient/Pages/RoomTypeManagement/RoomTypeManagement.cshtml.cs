@@ -7,12 +7,10 @@ using Microsoft.AspNetCore.SignalR;
 using System.Text;
 using System.Text.Json;
 
-namespace BookClassRoom.Pages.RoomTypeManagement
+namespace FAPCLClient.Pages.RoomTypeManagement
 {
     public class RoomTypeModel : PageModel
     {
-        private readonly UserManager<AspNetUser> _userManager;
-        private readonly IHubContext<SignalRServer> _signalRHub;
         private readonly HttpClient _httpClient;
 
         [BindProperty]
@@ -21,10 +19,8 @@ namespace BookClassRoom.Pages.RoomTypeManagement
         [BindProperty(SupportsGet = true)]
         public string SearchQuery { get; set; }
 
-        public RoomTypeModel(UserManager<AspNetUser> userManager, IHubContext<SignalRServer> signalRHub, IHttpClientFactory httpClientFactory)
+        public RoomTypeModel(IHttpClientFactory httpClientFactory)
         {
-            _userManager = userManager;
-            _signalRHub = signalRHub;
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.BaseAddress = new Uri("http://localhost:5043/api/RoomType/");
         }
@@ -58,6 +54,9 @@ namespace BookClassRoom.Pages.RoomTypeManagement
         {
             try
             {
+                var token = HttpContext.Session.GetString("Token");
+            
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 var json = JsonSerializer.Serialize(roomType);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync("", content);
@@ -83,6 +82,9 @@ namespace BookClassRoom.Pages.RoomTypeManagement
         {
             try
             {
+                var token = HttpContext.Session.GetString("Token");
+            
+                _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 var json = JsonSerializer.Serialize(roomType);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PutAsync($"{roomType.RoomTypeId}", content);

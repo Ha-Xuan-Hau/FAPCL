@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BookClassRoom.Hubs;
+using FAPCLClient.Model;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using BookClassRoom.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using FAPCLClient.Model;
 
-namespace BookClassRoom.Pages.ClassroomManagement
+namespace FAPCLClient.Pages.ClassroomManagement
 {
     public class CreateModel : PageModel
     {
@@ -59,7 +59,10 @@ namespace BookClassRoom.Pages.ClassroomManagement
                 IsAction = true
             };
 
+            var token = HttpContext.Session.GetString("Token");
             var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            
             var response = await client.PostAsJsonAsync($"{_apiBaseUrl}/Room/admin/room/add", newRoom);
 
             if (!response.IsSuccessStatusCode)

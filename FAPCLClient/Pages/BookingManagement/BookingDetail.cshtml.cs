@@ -1,27 +1,18 @@
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
+using FAPCLClient.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using FAPCLClient.Model;
 
-namespace BookClassRoom.Pages.BookingManagement
+namespace FAPCLClient.Pages.BookingManagement
 {
     public class BookingDetailModel : PageModel
     {
-        private readonly UserManager<AspNetUser> _userManager;
         private readonly HttpClient _httpClient;
-        private readonly IConfiguration _configuration;
-        
+
         private const string ApiBaseUrl = "http://localhost:5043/api/Booking";
 
-        public BookingDetailModel(UserManager<AspNetUser> userManager, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public BookingDetailModel(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _userManager = userManager;
             _httpClient = httpClientFactory.CreateClient();
-            _configuration = configuration;
 
             ConfirmedBookings = new List<Booking>();
             CompleteBookings = new List<Booking>();
@@ -30,7 +21,7 @@ namespace BookClassRoom.Pages.BookingManagement
             SearchQuery = string.Empty;
         }
 
-        public string UserId { get; set; }
+        public string? Token { get; set; }
         public bool IsAdmin { get; set; }
         public List<Booking> ConfirmedBookings { get; set; }
         public List<Booking> CompleteBookings { get; set; }
@@ -46,8 +37,10 @@ namespace BookClassRoom.Pages.BookingManagement
 
         public async Task OnGet(int currentPage = 1)
         {
-            UserId = _userManager.GetUserId(User);
+            Token = HttpContext.Session.GetString("Token");
             IsAdmin = User.IsInRole("Admin");
+            
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
 
             if (IsAdmin)
             {
@@ -82,6 +75,8 @@ namespace BookClassRoom.Pages.BookingManagement
         {
             var cancelUrl = $"{ApiBaseUrl}/cancel";
             
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+            
             var response = await _httpClient.PostAsJsonAsync(cancelUrl, new { BookingId = bookingId });
 
             if (response.IsSuccessStatusCode)
@@ -93,10 +88,10 @@ namespace BookClassRoom.Pages.BookingManagement
         }
     }
 
-    public class PagedResult<T>
+    public class PagedResult<T>(int totalPages, int currentPage)
     {
         public List<T> Items { get; set; } = new();
-        public int TotalPages { get; set; }
-        public int CurrentPage { get; set; }
+        public int TotalPages { get; set; } = totalPages;
+        public int CurrentPage { get; set; } = currentPage;
     }
 }

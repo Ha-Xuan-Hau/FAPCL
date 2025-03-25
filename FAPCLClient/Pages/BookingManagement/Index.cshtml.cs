@@ -3,7 +3,7 @@ using FAPCLClient.Model;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace BookClassRoom.Pages.BookingManagement
+namespace FAPCLClient.Pages.BookingManagement
 {
     public class IndexModel : PageModel
     {
