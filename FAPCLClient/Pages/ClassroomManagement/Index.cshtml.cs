@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using BookClassRoom.Hubs;
+using FAPCLClient.Model;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.SignalR;
-using BookClassRoom.Hubs;
-using FAPCLClient.Model;
 
-namespace BookClassRoom.Pages.ClassroomManagement
+namespace FAPCLClient.Pages.ClassroomManagement
 {
     public class IndexModel : PageModel
     {

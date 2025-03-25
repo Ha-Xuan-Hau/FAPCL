@@ -1,19 +1,13 @@
-using FAPCLClient.Model;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
+using FAPCLClient.Model;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace BookClassRoom.Pages.BookingManagement
+namespace FAPCLClient.Pages.BookingManagement
 {
-    public class CreateBookingModel : PageModel
+    public class CreateBookingModel(HttpClient httpClient) : PageModel
     {
-        private readonly HttpClient _httpClient;
-        private readonly UserManager<AspNetUser> _userManager;
-        
         private const string ApiBaseUrl = "http://localhost:5043/api";
 
         [BindProperty(SupportsGet = true)]
@@ -27,28 +21,24 @@ namespace BookClassRoom.Pages.BookingManagement
 
         public Room RoomDetails { get; set; } = new Room();
         public Slot SlotDetails { get; set; } = new Slot();
-        public string UserId { get; set; }
+        public string? Token { get; set; }
 
         [BindProperty]
-        public string Purpose { get; set; }
-
-        public CreateBookingModel(HttpClient httpClient, UserManager<AspNetUser> userManager)
-        {
-            _httpClient = httpClient;
-            _userManager = userManager;
-        }
+        public string Purpose { get; set; } = string.Empty; 
 
         public async Task<IActionResult> OnGet()
         {
-            UserId = _userManager.GetUserId(User);
+            Token = HttpContext.Session.GetString("Token");
+            
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
 
-            if (string.IsNullOrEmpty(UserId))
+            if (string.IsNullOrEmpty(Token))
             {
                 return RedirectToPage("/Account/Login", new { area = "Identity" });
             }
 
             // Gọi API lấy thông tin phòng
-            var roomResponse = await _httpClient.GetAsync($"{ApiBaseUrl}/Room/{RoomId}");
+            var roomResponse = await httpClient.GetAsync($"{ApiBaseUrl}/Room/admin/room/{RoomId}");
             if (roomResponse.IsSuccessStatusCode)
             {
                 RoomDetails = await roomResponse.Content.ReadFromJsonAsync<Room>() ?? new Room();
@@ -59,7 +49,7 @@ namespace BookClassRoom.Pages.BookingManagement
             }
 
             // Gọi API lấy thông tin slot
-            var slotResponse = await _httpClient.GetAsync($"{ApiBaseUrl}/Slot/{SlotId}");
+            var slotResponse = await httpClient.GetAsync($"{ApiBaseUrl}/Slot/{SlotId}");
             if (slotResponse.IsSuccessStatusCode)
             {
                 SlotDetails = await slotResponse.Content.ReadFromJsonAsync<Slot>() ?? new Slot();
@@ -74,25 +64,26 @@ namespace BookClassRoom.Pages.BookingManagement
 
         public async Task<IActionResult> OnPost()
         {
-            UserId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(UserId))
+            Token = HttpContext.Session.GetString("Token");
+            
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
+            if (string.IsNullOrEmpty(Token))
             {
                 return RedirectToPage("/Account/Login", new { area = "Identity" });
             }
 
             var newBooking = new
             {
-                RoomId = RoomId,
-                SlotId = SlotId,
-                SelectedDate = SelectedDate,
-                UserId = UserId,
-                Purpose = Purpose
+                RoomId,
+                SlotId,
+                SelectedDate,
+                Purpose
             };
 
             var jsonContent = new StringContent(JsonSerializer.Serialize(newBooking), Encoding.UTF8, "application/json");
 
             // Gọi API để tạo booking
-            var response = await _httpClient.PostAsync($"{ApiBaseUrl}/Booking/createBooking", jsonContent);
+            var response = await httpClient.PostAsync($"{ApiBaseUrl}/Booking/createBooking", jsonContent);
 
             if (response.IsSuccessStatusCode)
             {

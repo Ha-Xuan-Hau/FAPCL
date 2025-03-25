@@ -1,16 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using System.Text;
+using System.Text.Json;
 using BookClassRoom.Hubs;
 using FAPCLClient.Model;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.SignalR;
-using System.Net.Http;
-using System.Text.Json;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 
-namespace BookClassRoom.Pages.ClassroomManagement
+namespace FAPCLClient.Pages.ClassroomManagement
 {
     public class EditModel : PageModel
     {
@@ -49,6 +46,9 @@ namespace BookClassRoom.Pages.ClassroomManagement
 
         public async Task<IActionResult> OnPostAsync()
         {
+            var token = HttpContext.Session.GetString("Token");
+            
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             var jsonContent = new StringContent(JsonSerializer.Serialize(Room), Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync($"{ApiBaseUrl}/admin/room/{Room.RoomId}", jsonContent);
 
