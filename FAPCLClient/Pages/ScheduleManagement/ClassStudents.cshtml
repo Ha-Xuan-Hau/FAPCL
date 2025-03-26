@@ -1,0 +1,48 @@
+﻿@page
+@model FAPCLClient.Pages.ScheduleManagement.ClassStudentsModel
+@{
+    ViewData["Title"] = "Danh sách sinh viên";
+}
+
+<div class="container mt-4">
+    <h2 class="text-primary">Danh sách sinh viên</h2>
+
+    @if (Model.Students != null && Model.Students.Any())
+    {
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th> 
+                    <th>Tên</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int index = 1;
+                }
+                @foreach (var student in Model.Students)
+                {
+                    <tr>
+                        <td>@index</td> 
+                        <td>@student.UserName</td>
+                        <td>@student.Email</td>
+                        <td>@student.PhoneNumber</td>
+                    </tr>
+                    index++;
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Không có sinh viên nào trong lớp này.
+        </div>
+    }
+
+    <a asp-page="ClassDetail" asp-route-classId="@Model.ClassId" class="btn btn-secondary">
+        Quay lại
+    </a>
+</div>

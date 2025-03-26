@@ -1,0 +1,25 @@
+﻿@page
+@model FAPCLClient.Pages.ScheduleManagement.TeacherDetailModel
+@{
+    ViewData["Title"] = "Thông tin giáo viên";
+}
+
+<div class="container mt-4">
+    <h2 class="text-primary">Thông tin giáo viên</h2>
+
+    @if (Model.Teacher != null)
+    {
+        <div class="card shadow-sm p-4">
+            <h3>@Model.Teacher.UserName</h3>
+            <p><strong>ID:</strong> @Model.Teacher.Id</p>
+            <p><strong>Email:</strong> @Model.Teacher.Email</p>
+            <p><strong>Số điện thoại:</strong> @Model.Teacher.PhoneNumber</p>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            Không tìm thấy thông tin giáo viên.
+        </div>
+    }
+</div>

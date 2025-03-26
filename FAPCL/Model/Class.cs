@@ -17,7 +17,6 @@ namespace FAPCL.Model
         public int CourseId { get; set; }
         public string TeacherId { get; set; } = null!;
         public int RoomId { get; set; }
-        public int SlotId { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
