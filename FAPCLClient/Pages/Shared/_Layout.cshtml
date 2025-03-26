@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Mvc.ViewEngines
 @inject IWebHostEnvironment Environment
 @inject ICompositeViewEngine Engine
+@inject IHttpContextAccessor HttpContextAccessor
 <!DOCTYPE html>
 <html>
 <head>
@@ -35,20 +36,31 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
-                    @{
-                        var result = Engine.FindView(ViewContext, "_LoginPartial", isMainPage: false);
-                    }
-                    @if (result.Success)
-                    {
-                        await Html.RenderPartialAsync("_LoginPartial");
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("The default Identity UI layout requires a partial view '_LoginPartial' " +
-                            "usually located at '/Pages/_LoginPartial' or at '/Views/Shared/_LoginPartial' to work. Based on your configuration " +
-                            $"we have looked at it in the following locations: {System.Environment.NewLine}{string.Join(System.Environment.NewLine, result.SearchedLocations)}.");
-                    }
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @if (HttpContextAccessor.HttpContext.Session.GetString("Role") == "Admin")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/ClassRoomManagement/Index">Classroom Management</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/BookingManagement/BookingDetail">Booking Management</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/RoomTypeManagement/RoomTypeManagement">RoomType Management</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/BookingManagement/Index">Booking Classroom</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/BookingManagement/BookingDetail">Booking History</a>
+                            </li>
+                        }
+                    </ul>
+                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>

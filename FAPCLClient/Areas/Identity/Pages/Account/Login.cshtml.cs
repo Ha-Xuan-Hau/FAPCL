@@ -106,6 +106,7 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
                 // Lưu thông tin người dùng vào Session
                 HttpContext.Session.SetString("UserName", user.UserName);
                 HttpContext.Session.SetString("UserEmail", user.Email);
+                HttpContext.Session.SetString("Role", user.Roles.ToString());
                 HttpContext.Session.SetString("Token", tokenResponse.token);
 
                 await _context.SaveChangesAsync();

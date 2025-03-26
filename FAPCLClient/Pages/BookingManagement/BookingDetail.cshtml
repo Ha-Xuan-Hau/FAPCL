@@ -1,5 +1,6 @@
 ﻿@page
 @model BookingDetailModel
+@inject IHttpContextAccessor HttpContextAccessor
 @{
     ViewData["Title"] = "Booking Detail";
     Layout = "~/Pages/Shared/_Layout.cshtml";
@@ -22,7 +23,7 @@
                 <thead class="table-primary text-center">
                     <tr>
                         <th>Booking ID</th>
-                        @if (User.IsInRole("Admin"))
+                        @if (HttpContextAccessor.HttpContext.Session.GetString("Role") == "Admin")
                         {
                             <th>UserBooking</th>
                         }
@@ -38,7 +39,7 @@
                     {
                         <tr>
                             <td>@booking.BookingId</td>
-                            @if (User.IsInRole("Admin"))
+                            @if (HttpContextAccessor.HttpContext.Session.GetString("Role") == "Admin")
                             {
                                 <td>@booking.UserEmail</td>
                             }

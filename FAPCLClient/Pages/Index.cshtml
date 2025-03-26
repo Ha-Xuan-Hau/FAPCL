@@ -1,10 +1,181 @@
 ﻿@page
 @model IndexModel
+@inject IHttpContextAccessor HttpContextAccessor
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Welcome to the Classroom Booking System";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+  /* General Styling */
+body {
+    font-family: 'Nunito', sans-serif;
+    background-color: #f7f7f7;
+    color: #444;
+    margin: 0;
+}
+
+h3, h2 {
+    font-weight: bold;
+    color: #5c6bc0;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, lightblue, #f8d6a0); /* Soft yellow gradient */
+    padding: 100px 0;
+    color: white;
+    text-align: center;
+    border-radius: 15px;
+    margin-bottom: 50px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.hero-section h3 {
+    font-size: 3rem;
+    letter-spacing: 1.5px;
+}
+
+.hero-section p {
+    font-size: 1.5rem;
+    margin: 20px 0;
+}
+
+.btn-hero {
+    background: linear-gradient(135deg, lightpink, #f8d6a0);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.btn-hero:hover {
+    background-color: #f4a261;
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Feature Section */
+.features-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+    margin-bottom: 100px;
+    gap: 30px; /* Add space between cards */
+}
+
+.feature-card {
+    background-color: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 400px; /* Default card width */
+    transition: transform 0.3s, box-shadow 0.3s ease-in-out;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.feature-card img {
+    width: 300px; /* Fixed width */
+    height: 200px; /* Fixed height */
+    object-fit: cover; /* Ensure the image does not distort */
+    border-radius: 10px; /* Optional: rounded corners */
+    margin-bottom: 25px;
+    transition: transform 0.3s ease;
+}
+
+.feature-card img:hover {
+    transform: scale(1.1);
+}
+
+.feature-title {
+    font-size: 1.8rem;
+    color: #5c6bc0;
+    margin-bottom: 15px;
+}
+
+.feature-description {
+    font-size: 1rem;
+    color: #555;
+}
+
+/* Responsive Design */
+@@media (max-width: 1024px) {
+    .feature-card {
+        width: 45%; /* Adjust card width for medium screens (tablets and small laptops) */
+    }
+}
+
+@@media (max-width: 768px) {
+    .feature-card {
+        width: 90%; /* Cards almost full width on smaller screens (smartphones) */
+    }
+
+    /* Adjust the hero section for smaller screens */
+    .hero-section {
+        padding: 50px 0;
+    }
+
+    .hero-section h3 {
+        font-size: 2.5rem; /* Smaller text for mobile */
+    }
+
+    .hero-section p {
+        font-size: 1.2rem;
+    }
+
+    /* Modify the button size for smaller screens */
+    .btn-hero {
+        font-size: 1rem;
+        padding: 12px 25px;
+    }
+}
+
+</style>
+
+<div class="container">
+    <div class="hero-section">
+        <h3>@ViewData["Title"]</h3>
+        <p>Seamlessly book classrooms, manage classrooms, manage schedule and enhance productivity with our easy-to-use platform.</p>
+        @if (HttpContextAccessor.HttpContext.Session.GetString("Role") == "Admin")
+        {
+            <a class="btn btn-hero" id="classroom-management" asp-page="/ClassroomManagement/Index">Classroom Management</a>
+        }
+        else if(HttpContextAccessor.HttpContext.Session.GetString("Role") == "User")
+        {
+            <a class="btn btn-hero" id="start-booking" asp-area="" asp-page="/BookingManagement/Index">Start Booking</a>
+        }else{
+            <a class="btn btn-hero" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        }
+    </div>
+
+    <div class="features-container">
+        <div class="feature-card">
+            <img src="~/images/classroom1.png" alt="Easy Booking">
+            <div class="feature-title">Easy Booking</div>
+            <p class="feature-description">Book your desired classroom with just a few clicks. Fast, easy, and hassle-free.</p>
+        </div>
+
+        <div class="feature-card">
+            <img src="~/images/classroom2.png" alt="Manage Classroom">
+            <div class="feature-title">Easy Manage</div>
+            <p class="feature-description">Schedule and manage all classroom effortlessly. Control room availability with ease.</p>
+        </div>
+
+        <div class="feature-card">
+            <img src="~/images/classroom3.png" alt="Real-Time Availability">
+            <div class="feature-title">Real-Time Availability</div>
+            <p class="feature-description">View live availability of classrooms in real-time and book instantly.</p>
+        </div>
+    </div>
+
+   
 </div>
+

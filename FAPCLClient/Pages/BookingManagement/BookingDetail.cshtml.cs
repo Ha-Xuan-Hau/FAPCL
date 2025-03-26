@@ -38,7 +38,7 @@ namespace FAPCLClient.Pages.BookingManagement
         public async Task OnGet(int currentPage = 1)
         {
             Token = HttpContext.Session.GetString("Token");
-            IsAdmin = User.IsInRole("Admin");
+            IsAdmin = HttpContext.Session.GetString("Role") == "Admin";
 
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
 
