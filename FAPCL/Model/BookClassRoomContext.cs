@@ -26,7 +26,7 @@ namespace FAPCL.Model
         public DbSet<IdentityRoleClaim<string>> AspNetRoleClaims { get; set; }
 
         public virtual DbSet<AspNetUser> AspNetUsers { get; set; } = null!;
-        public virtual DbSet<Booking> Bookings { get; set; } = null!;
+        public virtual DbSet<Booking?> Bookings { get; set; } = null!;
         public virtual DbSet<BookingHistory> BookingHistories { get; set; } = null!;
         public virtual DbSet<Class> Classes { get; set; } = null!;
         public virtual DbSet<ClassSchedule> ClassSchedules { get; set; } = null!;

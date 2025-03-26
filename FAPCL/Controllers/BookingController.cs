@@ -77,7 +77,7 @@ namespace FAPCL.Controllers
         [HttpPost("cancel")]
         public async Task<IActionResult> CancelBooking([FromBody] CancelBookingRequest request)
         {
-            Booking? booking = await bookingService.GetBookingDetails(request.BookingId);
+            Booking? booking = await bookingService.GetBookingById(request.BookingId);
 
             if (booking == null)
             {

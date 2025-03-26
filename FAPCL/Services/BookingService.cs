@@ -16,6 +16,14 @@ namespace FAPCL.Services
             _context = context;
             _userManager = userManager;
         }
+        
+        public async Task<Booking?> GetBookingById(int bookingId)
+        {
+            return await _context.Bookings
+                .Include(b => b.Room)
+                .Include(b => b.Slot)
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+        }
 
         public async Task<Booking?> GetBookingDetails(int roomId, int? slotId, DateTime? selectedDate)
         {
@@ -108,7 +116,7 @@ namespace FAPCL.Services
             IQueryable<Booking> query;
 
             query = _context.Bookings
-                .Where(b => b.UserId == userId && b.Status == "Completed")
+                .Where(b => b.UserId == userId && (b.Status == "Completed" || b.Status == "Cancelled"))
                 .Include(b => b.Room)
                 .Include(b => b.Slot);
 
@@ -152,7 +160,7 @@ namespace FAPCL.Services
             return await query.ToListAsync();
         }
 
-        public async Task<bool> CancelBooking(Booking booking)
+        public async Task<bool> CancelBooking(Booking? booking)
         {
             if (booking.Status == "Confirmed")
             {
