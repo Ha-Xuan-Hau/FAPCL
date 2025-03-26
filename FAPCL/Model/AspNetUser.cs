@@ -42,6 +42,6 @@ namespace FAPCL.Model
         public virtual ICollection<News> News { get; set; }
         public virtual ICollection<StudentClass> StudentClasses { get; set; }
         public virtual ICollection<Timetable> Timetables { get; set; }
-
+        public virtual ExamSchedule? ExamScheduleAsTeacher { get; set; }
     }
 }

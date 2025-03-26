@@ -303,6 +303,11 @@ namespace FAPCL.Model
                     .HasMaxLength(128)
                     .HasColumnName("StudentID");
 
+                entity.Property(e => e.TeacherId)
+                    .IsRequired()                         // Teacher is required as a proctor
+                    .HasMaxLength(128)
+                    .HasColumnName("TeacherID");
+
                 entity.HasOne(d => d.Exam)
                     .WithMany(p => p.ExamSchedules)
                     .HasForeignKey(d => d.ExamId)
@@ -326,6 +331,13 @@ namespace FAPCL.Model
                     .HasForeignKey(d => d.StudentId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__ExamSched__Stude__0A9D95DB");
+
+                // Configure a one-to-one relationship for Teacher
+                entity.HasOne(d => d.Teacher)
+                    .WithOne(p => p.ExamScheduleAsTeacher)
+                    .HasForeignKey<ExamSchedule>(d => d.TeacherId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK__ExamSched__Teach__0B91BA14");
             });
 
             modelBuilder.Entity<News>(entity =>

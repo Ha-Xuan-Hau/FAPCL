@@ -1,0 +1,95 @@
+﻿@page "{id:int}"
+@model FAPCLClient.Pages.ExamScheduleManagement.DetailsModel
+@{
+    ViewData["Title"] = "Exam Schedule Details";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Exam Schedule Details</h2>
+        <a asp-page="Index" class="btn btn-outline-primary">
+            <i class="bi bi-plus-circle"></i> Create New Schedule
+        </a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage
+        </div>
+    }
+    else if (Model.ScheduledExams == null || !Model.ScheduledExams.Any())
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-info-circle"></i> No exam schedules found.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="my-0">@Model.ExamName</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Course</th>
+                                <th>Exam Date</th>
+                                <th>Time</th>
+                                <th>Room</th>
+                                <th>Students</th>
+                                <th>Proctor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var exam in Model.ScheduledExams.OrderBy(e => e.ExamDate).ThenBy(e => e.StartTime))
+                            {
+                                <tr>
+                                    <td>@exam.CourseName</td>
+                                    <td>@exam.ExamDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@exam.StartTime.ToString(@"hh\:mm") - @exam.EndTime.ToString(@"hh\:mm")</td>
+                                    <td>@exam.RoomName</td>
+                                    <td>@exam.StudentCount</td>
+                                    <td>@exam.TeacherName</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="my-0">Export Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <form method="post" asp-page-handler="ExportPdf">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-file-pdf"></i> Export to PDF
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <form method="post" asp-page-handler="ExportExcel">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="btn btn-outline-success w-100">
+                                <i class="bi bi-file-excel"></i> Export to Excel
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4">
+                        <a asp-page="PrintView" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-printer"></i> Print View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
