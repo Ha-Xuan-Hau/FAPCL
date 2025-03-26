@@ -16,5 +16,6 @@ namespace FAPCLClient.Model
         public virtual Room Room { get; set; } = null!;
         public virtual Slot Slot { get; set; } = null!;
         public virtual AspNetUser Student { get; set; } = null!;
+        public virtual AspNetUser Teacher { get; set; } = null!;
     }
 }
