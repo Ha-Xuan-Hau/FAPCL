@@ -106,60 +106,122 @@ namespace FAPCL.Services.examSchedule
                 List<int> createdExamIds = new List<int>();
 
                 // 7. Create exams and exam schedules
+                // foreach (var assignment in schedulingPlan.CourseAssignments)
+                // {
+                //     var courseId = assignment.Key;
+                //     var scheduleAssignment = assignment.Value;
+
+                //     // Create the exam record
+                //     var exam = new Exam
+                //     {
+                //         ExamName = sessionExamName,
+                //         CourseId = courseId,
+                //         RoomId = scheduleAssignment.RoomId,
+                //         SlotId = scheduleAssignment.SlotInfo.SlotId,
+                //         ExamDate = scheduleAssignment.SlotInfo.Date,
+                //     };
+
+                //     _context.Exams.Add(exam);
+                //     await _context.SaveChangesAsync(); // Save to get ExamID
+                //     createdExamIds.Add(exam.ExamId);
+
+                //     // Assign a teacher/proctor for this exam
+                //     // Assign a teacher/proctor for this exam
+                //     var proctor = await GetAvailableProctorAsync(scheduleAssignment.SlotInfo.Date, scheduleAssignment.SlotInfo.SlotId);
+
+                //     if (proctor == null)
+                //     {
+                //         await transaction.RollbackAsync();
+                //         return new SchedulingResult
+                //         {
+                //             Success = false,
+                //             Message = $"No available proctor for {courses.FirstOrDefault(c => c.CourseId == courseId)?.CourseName} exam"
+                //         };
+                //     }
+
+                //     // Proceed to create exam schedules using the retrieved proctor
+                //     foreach (var studentId in scheduleAssignment.StudentIds)
+                //     {
+                //         var examSchedule = new ExamSchedule
+                //         {
+                //             ExamId = exam.ExamId,
+                //             StudentId = studentId,
+                //             TeacherId = proctor.Id,
+                //             RoomId = scheduleAssignment.RoomId,
+                //             SlotId = scheduleAssignment.SlotInfo.SlotId,
+                //             ExamDate = scheduleAssignment.SlotInfo.Date
+                //         };
+
+                //         _context.ExamSchedules.Add(examSchedule);
+                //     }
+
+
+                //     await _context.SaveChangesAsync(); // Save exam schedules
+                // }
+
+                // await transaction.CommitAsync();
+                // 7. Create exams and exam schedules, splitting students into groups of 15 per exam room
                 foreach (var assignment in schedulingPlan.CourseAssignments)
                 {
                     var courseId = assignment.Key;
                     var scheduleAssignment = assignment.Value;
+                    var studentIds = scheduleAssignment.StudentIds;
 
-                    // Create the exam record
-                    var exam = new Exam
+                    // Split the students into chunks of 15
+                    var studentChunks = Chunk(studentIds, 15);
+
+                    foreach (var chunk in studentChunks)
                     {
-                        ExamName = sessionExamName,
-                        CourseId = courseId,
-                        RoomId = scheduleAssignment.RoomId,
-                        SlotId = scheduleAssignment.SlotInfo.SlotId,
-                        ExamDate = scheduleAssignment.SlotInfo.Date,
-                    };
+                        // Pick a random available room (classroom only)
+                        var random = new Random();
+                        var randomRoom = availableRooms[random.Next(availableRooms.Count)];
 
-                    _context.Exams.Add(exam);
-                    await _context.SaveChangesAsync(); // Save to get ExamID
-                    createdExamIds.Add(exam.ExamId);
-
-                    // Assign a teacher/proctor for this exam
-                    // Assign a teacher/proctor for this exam
-                    var proctor = await GetAvailableProctorAsync(scheduleAssignment.SlotInfo.Date, scheduleAssignment.SlotInfo.SlotId);
-
-                    if (proctor == null)
-                    {
-                        await transaction.RollbackAsync();
-                        return new SchedulingResult
+                        // Create the exam record for this chunk
+                        var exam = new Exam
                         {
-                            Success = false,
-                            Message = $"No available proctor for {courses.FirstOrDefault(c => c.CourseId == courseId)?.CourseName} exam"
-                        };
-                    }
-
-                    // Proceed to create exam schedules using the retrieved proctor
-                    foreach (var studentId in scheduleAssignment.StudentIds)
-                    {
-                        var examSchedule = new ExamSchedule
-                        {
-                            ExamId = exam.ExamId,
-                            StudentId = studentId,
-                            TeacherId = proctor.Id, 
-                            RoomId = scheduleAssignment.RoomId,
+                            ExamName = sessionExamName,
+                            CourseId = courseId,
+                            RoomId = randomRoom.RoomId,
                             SlotId = scheduleAssignment.SlotInfo.SlotId,
-                            ExamDate = scheduleAssignment.SlotInfo.Date
+                            ExamDate = scheduleAssignment.SlotInfo.Date,
                         };
 
-                        _context.ExamSchedules.Add(examSchedule);
+                        _context.Exams.Add(exam);
+                        await _context.SaveChangesAsync(); // Save to generate ExamID
+                        createdExamIds.Add(exam.ExamId);
+
+                        // Get a proctor for this exam slot
+                        var proctor = await GetAvailableProctorAsync(scheduleAssignment.SlotInfo.Date, scheduleAssignment.SlotInfo.SlotId);
+                        if (proctor == null)
+                        {
+                            await transaction.RollbackAsync();
+                            return new SchedulingResult
+                            {
+                                Success = false,
+                                Message = $"No available proctor for course {courses.FirstOrDefault(c => c.CourseId == courseId)?.CourseName} exam"
+                            };
+                        }
+
+                        // Create exam schedule entries for each student in the current chunk
+                        foreach (var studentId in chunk)
+                        {
+                            var examSchedule = new ExamSchedule
+                            {
+                                ExamId = exam.ExamId,
+                                StudentId = studentId,
+                                TeacherId = proctor.Id,
+                                RoomId = randomRoom.RoomId,
+                                SlotId = scheduleAssignment.SlotInfo.SlotId,
+                                ExamDate = scheduleAssignment.SlotInfo.Date
+                            };
+
+                            _context.ExamSchedules.Add(examSchedule);
+                        }
+
+                        await _context.SaveChangesAsync();
                     }
-
-
-                    await _context.SaveChangesAsync(); // Save exam schedules
                 }
 
-                await transaction.CommitAsync();
 
                 // 8. Return success with schedule details
                 return new SchedulingResult
@@ -208,7 +270,7 @@ namespace FAPCL.Services.examSchedule
                 .Where(x => x.Role.Name == "Teacher")
                 .Select(x => x.User)
                 .FirstOrDefaultAsync();
-                
+
             _logger.LogInformation($"Selected proctor with Id: {availableTeacher?.Id}");
 
             return availableTeacher;
@@ -342,15 +404,15 @@ namespace FAPCL.Services.examSchedule
         {
             try
             {
-                // Get only rooms with RoomTypeId = 1 (exam rooms)
+                // Get only classrooms (RoomTypeId == 1) that are available
                 var rooms = await _context.Rooms
-                    .Where(r => r.Status == "Available" && (r.IsAction == true || r.IsAction == null))
+                    .Where(r => r.RoomTypeId == 1
+                                && r.Status == "Available"
+                                && (r.IsAction == true || r.IsAction == null))
                     .OrderByDescending(r => r.Capacity)
                     .ToListAsync();
 
-                // Log the available room IDs for debugging
                 _logger.LogInformation($"Available room IDs: {string.Join(", ", rooms.Select(r => r.RoomId))}");
-
                 return rooms;
             }
             catch (Exception ex)
@@ -359,8 +421,6 @@ namespace FAPCL.Services.examSchedule
                 return new List<Room>();
             }
         }
-
-
 
         private Dictionary<int, List<int>> BuildCourseConflictGraph(Dictionary<int, List<string>> courseStudentMap)
         {
@@ -407,10 +467,8 @@ namespace FAPCL.Services.examSchedule
         {
             var plan = new SchedulingPlan();
 
-            // Log available rooms for debugging
             _logger.LogInformation($"Available rooms for scheduling: {string.Join(", ", availableRooms.Select(r => r.RoomId))}");
 
-            // Ensure we have rooms to work with
             if (!availableRooms.Any())
             {
                 plan.IsValid = false;
@@ -424,7 +482,6 @@ namespace FAPCL.Services.examSchedule
                 .ThenByDescending(c => courseStudentMap[c.CourseId].Count)
                 .ToList();
 
-            // Track assignments
             var assignedSlots = new Dictionary<int, SlotWithDateInfo>();
             var usedRoomsInSlot = new Dictionary<string, HashSet<int>>();
 
@@ -436,40 +493,36 @@ namespace FAPCL.Services.examSchedule
                 // Get previously used slots by conflicting courses
                 var conflictingSlotKeys = conflicts
                     .Where(assignedSlots.ContainsKey)
-                    .Select(c => $"{assignedSlots[c].Date.ToString("yyyy-MM-dd")}_{assignedSlots[c].SlotId}")
+                    .Select(c => $"{assignedSlots[c].Date:yyyy-MM-dd}_{assignedSlots[c].SlotId}")
                     .ToHashSet();
 
-                // Find a slot and room that works
                 SlotWithDateInfo selectedSlot = null;
                 Room selectedRoom = null;
 
+                // For scheduling exam, use effective count = min(total enrollment, 15)
+                int actualCount = courseStudentMap[course.CourseId].Count;
+                int effectiveCount = actualCount > 15 ? 15 : actualCount;
+
                 foreach (var slot in availableSlots)
                 {
-                    var slotKey = $"{slot.Date.ToString("yyyy-MM-dd")}_{slot.SlotId}";
+                    var slotKey = $"{slot.Date:yyyy-MM-dd}_{slot.SlotId}";
 
-                    // Skip this slot if it conflicts with already scheduled courses
                     if (conflictingSlotKeys.Contains(slotKey))
                         continue;
 
-                    // Initialize room tracking for this slot
                     if (!usedRoomsInSlot.ContainsKey(slotKey))
                         usedRoomsInSlot[slotKey] = new HashSet<int>();
 
-                    // Get student count for this course
-                    int studentCount = courseStudentMap[course.CourseId].Count;
-
-                    // Find an available room for this slot
                     foreach (var room in availableRooms)
                     {
-                        // Skip if room is already used in this slot
                         if (usedRoomsInSlot[slotKey].Contains(room.RoomId))
                             continue;
 
-                        // Skip if room capacity is insufficient
-                        if (room.Capacity < studentCount)
+                        int effectiveCapacity = Math.Min(room.Capacity, 15);
+                        if (effectiveCapacity < effectiveCount)
                             continue;
 
-                        // We found a suitable room!
+                        // Suitable room found
                         selectedRoom = room;
                         selectedSlot = slot;
                         usedRoomsInSlot[slotKey].Add(room.RoomId);
@@ -477,7 +530,7 @@ namespace FAPCL.Services.examSchedule
                     }
 
                     if (selectedRoom != null)
-                        break; // We found a slot and room
+                        break;
                 }
 
                 if (selectedSlot == null || selectedRoom == null)
@@ -487,19 +540,16 @@ namespace FAPCL.Services.examSchedule
                     return plan;
                 }
 
-                // Log the assignment
                 _logger.LogInformation($"Scheduled course {course.CourseId} in room {selectedRoom.RoomId} on {selectedSlot.Date.ToShortDateString()} slot {selectedSlot.SlotId}");
 
-                // Create the assignment with EXPLICITLY SET room ID
                 plan.CourseAssignments[course.CourseId] = new CourseScheduleAssignment
                 {
                     CourseId = course.CourseId,
                     SlotInfo = selectedSlot,
-                    RoomId = selectedRoom.RoomId, // THIS IS THE KEY FIX - explicit assignment
-                    StudentIds = courseStudentMap[course.CourseId]
+                    RoomId = selectedRoom.RoomId,
+                    StudentIds = courseStudentMap[course.CourseId] // full enrollment; will split later
                 };
 
-                // If you're using RoomAssignments elsewhere, initialize it properly
                 if (plan.CourseAssignments[course.CourseId].RoomAssignments == null)
                 {
                     plan.CourseAssignments[course.CourseId].RoomAssignments = new Dictionary<int, List<string>>
@@ -515,62 +565,6 @@ namespace FAPCL.Services.examSchedule
             return plan;
         }
 
-
-        // Helper method to distribute students to rooms
-        private Dictionary<int, List<string>> DistributeStudentsToRooms(
-            List<string> studentIds,
-            List<Room> rooms,
-            int maxStudentsPerRoom)
-        {
-            var result = new Dictionary<int, List<string>>();
-            int studentIndex = 0;
-
-            foreach (var room in rooms)
-            {
-                int studentsForThisRoom = Math.Min(maxStudentsPerRoom, room.Capacity);
-                var studentsAssigned = new List<string>();
-
-                for (int i = 0; i < studentsForThisRoom && studentIndex < studentIds.Count; i++)
-                {
-                    studentsAssigned.Add(studentIds[studentIndex++]);
-                }
-
-                result[room.RoomId] = studentsAssigned;
-
-                if (studentIndex >= studentIds.Count)
-                    break;
-            }
-
-            return result;
-        }
-
-
-        private async Task<List<AspNetUser>> GetAvailableProctorsAsync(DateTime examDate, int slotId)
-        {
-            // Find teachers who aren't already assigned to proctor exams at this time
-            var busyTeacherIds = await _context.ExamSchedules
-                .Where(es => es.ExamDate.Date == examDate.Date && es.SlotId == slotId)
-                .Select(es => es.TeacherId)
-                .Distinct()
-                .ToListAsync();
-
-            // Find available teachers who are not busy
-            var availableProctors = await _context.Users
-                .Where(u => !busyTeacherIds.Contains(u.Id))
-                .Join(_context.UserRoles,
-                      u => u.Id,
-                      ur => ur.UserId,
-                      (u, ur) => new { User = u, RoleId = ur.RoleId })
-                .Join(_context.Roles,
-                      ur => ur.RoleId,
-                      r => r.Id,
-                      (ur, r) => new { User = ur.User, Role = r })
-                .Where(x => x.Role.Name == "Teacher")
-                .Select(x => x.User)
-                .ToListAsync();
-
-            return availableProctors;
-        }
 
 
 
@@ -601,9 +595,22 @@ namespace FAPCL.Services.examSchedule
         }
 
         #endregion
+
+        private static List<List<T>> Chunk<T>(List<T> source, int chunkSize)
+        {
+            var chunks = new List<List<T>>();
+            for (int i = 0; i < source.Count; i += chunkSize)
+            {
+                chunks.Add(source.GetRange(i, Math.Min(chunkSize, source.Count - i)));
+            }
+            return chunks;
+        }
+
     }
 
     #region Helper Classes
+
+
 
     public class SlotWithDateInfo
     {
@@ -626,11 +633,12 @@ namespace FAPCL.Services.examSchedule
     {
         public int CourseId { get; set; }
         public SlotWithDateInfo SlotInfo { get; set; }
-
         public int RoomId { get; set; }
         public Dictionary<int, List<string>> RoomAssignments { get; set; } // RoomId -> List of StudentIds
         public List<string> StudentIds { get; set; } // All students for this course
     }
+
+
 
     #endregion
 }
