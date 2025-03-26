@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using FAPCL.DTO;
-using FAPCL.DTO.FAPCL.DTO;
-
 namespace FAPCLClient.Pages.ScheduleManagement
 {
     public class TeacherDetailModel : PageModel
