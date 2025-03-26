@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Ebay_Project_PRN.Helper;
 using FAPCL.Mapping;
+using FAPCL.Services.examSchedule;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -82,6 +83,7 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISlotService, SlotService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
+builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
 
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 

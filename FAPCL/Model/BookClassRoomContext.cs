@@ -312,9 +312,23 @@ namespace FAPCL.Model
                     .HasColumnName("StudentID");
 
                 entity.Property(e => e.TeacherId)
-                    .IsRequired()                         // Teacher is required as a proctor
+                    .IsRequired() // Teacher is required as a proctor
                     .HasMaxLength(128)
                     .HasColumnName("TeacherID");
+
+                // Configure relationship for Student
+                entity.HasOne(d => d.Student)
+                    .WithMany(p => p.ExamSchedulesAsStudent)
+                    .HasForeignKey(d => d.StudentId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK__ExamSched__Stude__0A9D95DB");
+
+                // Configure relationship for Teacher
+                entity.HasOne(d => d.Teacher)
+                    .WithMany(p => p.ExamSchedulesAsTeacher)
+                    .HasForeignKey(d => d.TeacherId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK__ExamSched__Teach__0B91BA14");
 
                 entity.HasOne(d => d.Exam)
                     .WithMany(p => p.ExamSchedules)
@@ -333,19 +347,6 @@ namespace FAPCL.Model
                     .HasForeignKey(d => d.SlotId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__ExamSched__SlotI__0C85DE4D");
-
-                entity.HasOne(d => d.Student)
-                    .WithMany(p => p.ExamSchedules)
-                    .HasForeignKey(d => d.StudentId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__ExamSched__Stude__0A9D95DB");
-
-                // Configure a one-to-one relationship for Teacher
-                entity.HasOne(d => d.Teacher)
-                    .WithOne(p => p.ExamScheduleAsTeacher)
-                    .HasForeignKey<ExamSchedule>(d => d.TeacherId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__ExamSched__Teach__0B91BA14");
             });
 
             modelBuilder.Entity<News>(entity =>
