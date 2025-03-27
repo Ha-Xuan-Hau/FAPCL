@@ -1,0 +1,105 @@
+﻿@page
+@model FAPCLClient.Pages.ScheduleManagement.TeacherScheduleModel
+@{
+    ViewData["Title"] = "Lịch Dạy Của Giáo Viên";
+    int currentYear = DateTime.Now.Year;
+    var daysOfWeek = new[] { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+    var slots = Model.Schedule.Select(s => s.SlotName).Distinct().OrderBy(s => s).ToList();
+}
+
+<div class="container mt-4">
+    <h2 class="text-primary">Lịch Dạy Của Giáo Viên</h2>
+
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">Chọn Năm:</label>
+                <select asp-for="SelectedYear" class="form-select" required onchange="this.form.submit()">
+                    @for (int i = currentYear - 2; i <= currentYear + 2; i++)
+                    {
+                        <option value="@i" selected="@(i == int.Parse(Model.SelectedYear) ? "selected" : null)">@i</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Chọn Tuần:</label>
+                <select asp-for="SelectedWeek" class="form-select" required onchange="this.form.submit()">
+                    @{
+                        int selectedYear = int.Parse(Model.SelectedYear);
+                        DateTime firstMonday = new DateTime(selectedYear, 1, 1);
+                        while (firstMonday.DayOfWeek != DayOfWeek.Monday)
+                        {
+                            firstMonday = firstMonday.AddDays(1);
+                        }
+
+                        int weekNumber = 1;
+                        while (firstMonday.Year == selectedYear)
+                        {
+                            DateTime fromDate = firstMonday;
+                            DateTime toDate = fromDate.AddDays(6);
+
+                            <option value="@weekNumber" selected="@(weekNumber == int.Parse(Model.SelectedWeek) ? "selected" : null)">
+                                @fromDate.ToString("dd-MM") - @toDate.ToString("dd-MM")
+                            </option>
+
+                            firstMonday = firstMonday.AddDays(7);
+                            weekNumber++;
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Schedule != null && Model.Schedule.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Ca dạy</th>
+                        @foreach (var day in daysOfWeek)
+                        {
+                            <th>@day</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slot in slots)
+                    {
+                        <tr>
+                            <td><strong>@slot</strong></td>
+                            @foreach (var day in daysOfWeek)
+                            {
+                                var schedule = Model.Schedule.FirstOrDefault(s => s.SlotName == slot && s.DayOfWeek == day);
+                                <td>
+                                    @if (schedule != null)
+                                    {
+                                        <div><strong>@schedule.Date.ToString("dd/MM")</strong></div>
+                                        <div>
+                                            <a asp-page="/ScheduleManagement/ClassDetail" asp-route-classId="@schedule.ClassId">
+                                                @schedule.ClassName
+                                            </a>
+                                        </div>
+                                        <div>@schedule.CourseName</div>
+                                        <div>@schedule.RoomName</div>
+                                        <div>@schedule.StartTime.ToString(@"hh\:mm") - @schedule.EndTime.ToString(@"hh\:mm")</div>
+                                    }
+                                    else
+                                    {
+                                        <div>-</div>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">Không có lịch dạy nào trong khoảng thời gian này.</div>
+    }
+</div>

@@ -1,0 +1,40 @@
+﻿@page
+@model FAPCLClient.Pages.ScheduleManagement.ClassDetailModel
+@{
+    ViewData["Title"] = "Class Detail";
+}
+
+<div class="container mt-4">
+    <h2 class="text-primary">Chi tiết lớp học</h2>
+
+    @if (Model.ClassDetail != null)
+    {
+        <div class="card shadow-sm p-4">
+            <h3>
+                    @Model.ClassDetail.ClassName
+            </h3>
+            <p><strong>Thời gian:</strong> @Model.ClassDetail.StartDate.ToString("dd/MM/yyyy") - @Model.ClassDetail.EndDate.ToString("dd/MM/yyyy")</p>
+
+            <p>
+                <strong>Giáo viên:</strong>
+                <a asp-page="TeacherDetail" asp-route-id="@Model.ClassDetail.Teacher.Id" class="text-primary">
+                    @Model.ClassDetail.Teacher.UserName
+                </a>
+            </p>
+
+            <p><strong>Khóa học:</strong> @Model.ClassDetail.Course.CourseName</p>
+            <p><strong>Số tín chỉ:</strong> @Model.ClassDetail.Course.Credits</p>
+            <p><strong>Mô tả:</strong> @Model.ClassDetail.Course.Description</p>
+
+            <a asp-page="ClassStudents" asp-route-classId="@Model.ClassDetail.ClassId" class="btn btn-primary">
+                Xem danh sách sinh viên
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            Không tìm thấy thông tin lớp học.
+        </div>
+    }
+</div>
