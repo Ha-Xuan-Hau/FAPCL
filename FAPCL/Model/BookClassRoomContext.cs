@@ -197,8 +197,6 @@ namespace FAPCL.Model
 
                 entity.Property(e => e.RoomId).HasColumnName("RoomID");
 
-                entity.Property(e => e.SlotId).HasColumnName("SlotID");
-
                 entity.Property(e => e.StartDate).HasColumnType("date");
 
                 entity.Property(e => e.TeacherId)
@@ -216,12 +214,6 @@ namespace FAPCL.Model
                     .HasForeignKey(d => d.RoomId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__Classes__RoomID__72C60C4A");
-
-                entity.HasOne(d => d.Slot)
-                    .WithMany(p => p.Classes)
-                    .HasForeignKey(d => d.SlotId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Classes__SlotID__73BA3083");
 
                 entity.HasOne(d => d.Teacher)
                     .WithMany(p => p.Classes)
