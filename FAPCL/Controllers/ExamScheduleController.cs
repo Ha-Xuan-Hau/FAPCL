@@ -64,7 +64,7 @@ namespace FAPCL.Controllers
         }
         
         [HttpGet("{id}")]
-        public async Task<ActionResult<SchedulingResult>> GetScheduleDetails(int id)
+        public async Task<ActionResult<DetailedExamResult>> GetScheduleDetails(int id)
         {
             try
             {
@@ -86,19 +86,19 @@ namespace FAPCL.Controllers
             }
         }
         
-        [HttpGet("courses")]
-        public async Task<ActionResult<List<CourseDTO>>> GetCourses()
-        {
-            try
-            {
-                var courses = await _schedulingService.GetCoursesAsync();
-                return Ok(courses);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving courses");
-                return StatusCode(500, "An unexpected error occurred");
-            }
-        }
+        // [HttpGet("courses")]
+        // public async Task<ActionResult<List<CourseDTO>>> GetCourses(DateTime startDate, DateTime endDate)
+        // {
+        //     try
+        //     {
+        //         var courses = await _schedulingService.GetCoursesAsync(startDate, endDate);
+        //         return Ok(courses);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Error retrieving courses");
+        //         return StatusCode(500, "An unexpected error occurred");
+        //     }
+        // }
     }
 }
