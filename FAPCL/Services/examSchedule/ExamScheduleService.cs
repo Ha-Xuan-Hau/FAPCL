@@ -1,7 +1,12 @@
-﻿using FAPCL.DTO;
+﻿﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using FAPCL.DTO;
 using FAPCL.DTO.ExamSchedule;
 using FAPCL.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace FAPCL.Services.examSchedule
 {
@@ -19,16 +24,16 @@ namespace FAPCL.Services.examSchedule
         }
 
         public async Task<SchedulingResult> ScheduleExamsAsync(
-    string examName,
-    List<int> courseIds,
-    DateTime startDate,
-    DateTime endDate)
+            string examName,
+            List<int> courseIds,
+            DateTime startDate,
+            DateTime endDate)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // 1. Validate input and check if courses exist
+                // 1. Validate input and check if courses exist.
                 var courses = await _context.Courses
                     .Where(c => courseIds.Contains(c.CourseId))
                     .ToListAsync();
@@ -42,9 +47,8 @@ namespace FAPCL.Services.examSchedule
                     };
                 }
 
-                // 2. Get all students enrolled in these courses
+                // 2. Get all enrolled students for these courses.
                 var courseStudentMap = await GetEnrolledStudentsForCoursesAsync(courseIds);
-
                 if (courseStudentMap.Values.Any(list => !list.Any()))
                 {
                     return new SchedulingResult
@@ -54,9 +58,8 @@ namespace FAPCL.Services.examSchedule
                     };
                 }
 
-                // 3. Get available time slots in the selected date range
+                // 3. Get available time slots in the selected date range.
                 var availableSlots = await GetAvailableSlotsInDateRangeAsync(startDate, endDate);
-
                 if (!availableSlots.Any())
                 {
                     return new SchedulingResult
@@ -66,9 +69,8 @@ namespace FAPCL.Services.examSchedule
                     };
                 }
 
-                // 4. Get available rooms with RoomTypeId = 1
+                // 4. Get available rooms (RoomTypeId == 1).
                 var availableRooms = await GetAvailableRoomsAsync();
-
                 if (!availableRooms.Any())
                 {
                     return new SchedulingResult
@@ -78,13 +80,12 @@ namespace FAPCL.Services.examSchedule
                     };
                 }
 
-                // 5. Build conflict graph between courses based on common students
+                // 5. Build conflict graph based on common enrolled students.
                 var conflictGraph = BuildCourseConflictGraph(courseStudentMap);
 
-                // 6. Generate scheduling plan using graph coloring algorithm
+                // 6. Generate the scheduling plan using the updated constraints.
                 var schedulingPlan = GenerateSchedulingPlan(
                     courses,
-                    conflictGraph,
                     courseStudentMap,
                     availableSlots,
                     availableRooms);
@@ -98,100 +99,40 @@ namespace FAPCL.Services.examSchedule
                     };
                 }
 
-                // Generate a unique session identifier to group these exams
+                // Generate a unique session identifier for grouping these exams.
                 string sessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
                 string sessionExamName = $"{examName} [Session:{sessionId}]";
 
-                // Store created exam IDs
+                // 7. Create exams and exam schedules.
                 List<int> createdExamIds = new List<int>();
 
-                // 7. Create exams and exam schedules
-                // foreach (var assignment in schedulingPlan.CourseAssignments)
-                // {
-                //     var courseId = assignment.Key;
-                //     var scheduleAssignment = assignment.Value;
-
-                //     // Create the exam record
-                //     var exam = new Exam
-                //     {
-                //         ExamName = sessionExamName,
-                //         CourseId = courseId,
-                //         RoomId = scheduleAssignment.RoomId,
-                //         SlotId = scheduleAssignment.SlotInfo.SlotId,
-                //         ExamDate = scheduleAssignment.SlotInfo.Date,
-                //     };
-
-                //     _context.Exams.Add(exam);
-                //     await _context.SaveChangesAsync(); // Save to get ExamID
-                //     createdExamIds.Add(exam.ExamId);
-
-                //     // Assign a teacher/proctor for this exam
-                //     // Assign a teacher/proctor for this exam
-                //     var proctor = await GetAvailableProctorAsync(scheduleAssignment.SlotInfo.Date, scheduleAssignment.SlotInfo.SlotId);
-
-                //     if (proctor == null)
-                //     {
-                //         await transaction.RollbackAsync();
-                //         return new SchedulingResult
-                //         {
-                //             Success = false,
-                //             Message = $"No available proctor for {courses.FirstOrDefault(c => c.CourseId == courseId)?.CourseName} exam"
-                //         };
-                //     }
-
-                //     // Proceed to create exam schedules using the retrieved proctor
-                //     foreach (var studentId in scheduleAssignment.StudentIds)
-                //     {
-                //         var examSchedule = new ExamSchedule
-                //         {
-                //             ExamId = exam.ExamId,
-                //             StudentId = studentId,
-                //             TeacherId = proctor.Id,
-                //             RoomId = scheduleAssignment.RoomId,
-                //             SlotId = scheduleAssignment.SlotInfo.SlotId,
-                //             ExamDate = scheduleAssignment.SlotInfo.Date
-                //         };
-
-                //         _context.ExamSchedules.Add(examSchedule);
-                //     }
-
-
-                //     await _context.SaveChangesAsync(); // Save exam schedules
-                // }
-
-                // await transaction.CommitAsync();
-                // 7. Create exams and exam schedules, splitting students into groups of 15 per exam room
-                foreach (var assignment in schedulingPlan.CourseAssignments)
+                foreach (var kvp in schedulingPlan.MultipleCourseAssignments)
                 {
-                    var courseId = assignment.Key;
-                    var scheduleAssignment = assignment.Value;
-                    var studentIds = scheduleAssignment.StudentIds;
+                    int courseId = kvp.Key;
+                    var assignments = kvp.Value;
+                    var enrolledStudents = courseStudentMap[courseId];
 
-                    // Split the students into chunks of 15
-                    var studentChunks = Chunk(studentIds, 15);
-
-                    foreach (var chunk in studentChunks)
+                    // Split enrolled students into chunks of 15.
+                    var studentChunks = Chunk(enrolledStudents, 15);
+                    // It is assumed that the number of chunks equals the number of exam groups scheduled for the course.
+                    for (int i = 0; i < studentChunks.Count; i++)
                     {
-                        // Pick a random available room (classroom only)
-                        var random = new Random();
-                        var randomRoom = availableRooms[random.Next(availableRooms.Count)];
-
-                        // Create the exam record for this chunk
+                        var assignment = assignments[i];
+                        // Create exam record.
                         var exam = new Exam
                         {
                             ExamName = sessionExamName,
                             CourseId = courseId,
-                            RoomId = randomRoom.RoomId,
-                            SlotId = scheduleAssignment.SlotInfo.SlotId,
-                            ExamDate = scheduleAssignment.SlotInfo.Date,
+                            RoomId = assignment.RoomId,
+                            SlotId = assignment.SlotInfo.SlotId,
+                            ExamDate = assignment.SlotInfo.Date,
                         };
-
                         _context.Exams.Add(exam);
-                        await _context.SaveChangesAsync(); // Save to generate ExamID
+                        await _context.SaveChangesAsync(); // Save to generate ExamId.
                         createdExamIds.Add(exam.ExamId);
 
-                        // Get a proctor for this exam slot
-                        var proctor = await GetAvailableProctorAsync(scheduleAssignment.SlotInfo.Date, scheduleAssignment.SlotInfo.SlotId);
+                        // Get an available proctor for the exam.
+                        var proctor = await GetAvailableProctorAsync(assignment.SlotInfo.Date, assignment.SlotInfo.SlotId);
                         if (proctor == null)
                         {
                             await transaction.RollbackAsync();
@@ -202,33 +143,33 @@ namespace FAPCL.Services.examSchedule
                             };
                         }
 
-                        // Create exam schedule entries for each student in the current chunk
-                        foreach (var studentId in chunk)
+                        // Create exam schedule entries for each student in the current chunk.
+                        foreach (var studentId in studentChunks[i])
                         {
                             var examSchedule = new ExamSchedule
                             {
                                 ExamId = exam.ExamId,
                                 StudentId = studentId,
                                 TeacherId = proctor.Id,
-                                RoomId = randomRoom.RoomId,
-                                SlotId = scheduleAssignment.SlotInfo.SlotId,
-                                ExamDate = scheduleAssignment.SlotInfo.Date
+                                RoomId = assignment.RoomId,
+                                SlotId = assignment.SlotInfo.SlotId,
+                                ExamDate = assignment.SlotInfo.Date
                             };
-
                             _context.ExamSchedules.Add(examSchedule);
                         }
-
                         await _context.SaveChangesAsync();
                     }
                 }
 
+                await transaction.CommitAsync();
+                _logger.LogInformation("Transaction committed successfully");
 
-                // 8. Return success with schedule details
+                // 8. Return the scheduling result.
                 return new SchedulingResult
                 {
                     Success = true,
                     Message = "Exams scheduled successfully",
-                    ScheduleId = createdExamIds.FirstOrDefault(), // Use first exam ID as reference
+                    ScheduleId = createdExamIds.FirstOrDefault(),
                     ScheduledExams = await GetScheduledExamInfoByExamNameAsync(sessionExamName)
                 };
             }
@@ -236,7 +177,6 @@ namespace FAPCL.Services.examSchedule
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error in ScheduleExamsAsync");
-
                 return new SchedulingResult
                 {
                     Success = false,
@@ -245,40 +185,185 @@ namespace FAPCL.Services.examSchedule
             }
         }
 
+        #region  Scheduling Plan 
 
-        // Modify GetAvailableProctorAsync to use courseId for direct mapping
+        /// <summary>
+        /// Generates a scheduling plan that satisfies the following constraints:
+        /// 1. All exam groups for a given course must be scheduled concurrently (i.e., on the same day and in the same slot).
+        /// 2. If a course’s exam scheduling for a day takes up all the classrooms (i.e., total groups equals the institution-wide room count),
+        ///    then that day is reserved exclusively for that course (no other course is allowed on that day).
+        /// 3. No more than two courses can have exams on the same day (unless the day is exclusive).
+        /// 4. Different courses scheduled on the same day must occur in different time slots.
+        /// 
+        /// This version removes the conflict-graph check and only enforces that the same slot is not used by two different courses.
+        /// </summary>
+        private SchedulingPlan GenerateSchedulingPlan(
+            List<Course> courses,
+            Dictionary<int, List<string>> courseStudentMap,
+            List<SlotWithDateInfo> availableSlots,
+            List<Room> availableRooms)
+        {
+            var plan = new SchedulingPlan();
+
+            // Group available slots by day (only the date portion).
+            var slotsByDay = availableSlots
+                .GroupBy(s => s.Date.Date)
+                .ToDictionary(g => g.Key, g => g.OrderBy(s => s.SlotId).ToList());
+
+            // For each day-slot combination, initialize available rooms (each day/slot gets a fresh copy of all available rooms).
+            var availableRoomsByDaySlot = new Dictionary<(DateTime, int), List<Room>>();
+            foreach (var day in slotsByDay.Keys)
+            {
+                foreach (var slot in slotsByDay[day])
+                {
+                    availableRoomsByDaySlot[(day, slot.SlotId)] = new List<Room>(availableRooms);
+                }
+            }
+
+            // Track which courses are scheduled on each day.
+            var coursesScheduledPerDay = new Dictionary<DateTime, HashSet<int>>();
+            // Track exclusive day assignment: if a course uses all classrooms in a slot, that day is marked exclusive for it.
+            var exclusiveDay = new Dictionary<DateTime, int>();
+
+            plan.MultipleCourseAssignments = new Dictionary<int, List<CourseScheduleAssignment>>();
+
+            // Institution-wide room count (used for exclusivity check).
+            int institutionRoomCount = availableRooms.Count;
+
+            // Sort courses by descending enrollment (more students may be more constrained).
+            var sortedCourses = courses.OrderByDescending(c => courseStudentMap[c.CourseId].Count).ToList();
+
+            foreach (var course in sortedCourses)
+            {
+                var enrolled = courseStudentMap[course.CourseId];
+                int totalGroupsNeeded = (int)Math.Ceiling(enrolled.Count / 15.0);
+                List<CourseScheduleAssignment> assignmentsForCourse = new List<CourseScheduleAssignment>();
+                bool scheduledForCourse = false;
+
+                // Iterate candidate days in chronological order.
+                foreach (var day in slotsByDay.Keys.OrderBy(d => d))
+                {
+                    // Skip this day if it is exclusively reserved for a different course.
+                    if (exclusiveDay.ContainsKey(day) && exclusiveDay[day] != course.CourseId)
+                        continue;
+
+                    // Retrieve courses already scheduled on this day.
+                    var coursesOnDay = coursesScheduledPerDay.ContainsKey(day)
+                        ? coursesScheduledPerDay[day]
+                        : new HashSet<int>();
+
+                    // Enforce that (unless the day is exclusive) no more than 2 courses are scheduled on the same day.
+                    if (!exclusiveDay.ContainsKey(day) && coursesOnDay.Count >= 2)
+                        continue;
+
+                    // Determine which slots on this day are already used by other courses.
+                    var usedSlotsOnDay = plan.MultipleCourseAssignments
+                        .SelectMany(kvp => kvp.Value)
+                        .Where(a => a.SlotInfo.Date.Date == day)
+                        .Select(a => a.SlotInfo.SlotId)
+                        .ToHashSet();
+
+                    // Iterate over all slots on this day that are not already used.
+                    foreach (var slot in slotsByDay[day].Where(s => !usedSlotsOnDay.Contains(s.SlotId)))
+                    {
+                        // Check available rooms for this day-slot.
+                        if (!availableRoomsByDaySlot.TryGetValue((day, slot.SlotId), out var roomsAvailable))
+                            continue;
+
+                        // To schedule all exam groups concurrently for this course,
+                        // we need at least 'totalGroupsNeeded' rooms available in this slot.
+                        if (roomsAvailable.Count >= totalGroupsNeeded)
+                        {
+                            // Reserve the necessary rooms and create an assignment for each exam group.
+                            for (int i = 0; i < totalGroupsNeeded; i++)
+                            {
+                                var chosenRoom = roomsAvailable[0];
+                                roomsAvailable.RemoveAt(0);
+
+                                var assignment = new CourseScheduleAssignment
+                                {
+                                    CourseId = course.CourseId,
+                                    SlotInfo = new SlotWithDateInfo
+                                    {
+                                        SlotId = slot.SlotId,
+                                        SlotName = slot.SlotName,
+                                        StartTime = slot.StartTime,
+                                        EndTime = slot.EndTime,
+                                        Date = day
+                                    },
+                                    RoomId = chosenRoom.RoomId,
+                                    // Store the full enrolled student list; later, these will be split into chunks of 15.
+                                    StudentIds = enrolled
+                                };
+                                assignmentsForCourse.Add(assignment);
+                            }
+
+                            // If this course uses up all available classrooms on this day/slot,
+                            // mark the day as exclusive for that course.
+                            if (totalGroupsNeeded == institutionRoomCount)
+                            {
+                                exclusiveDay[day] = course.CourseId;
+                            }
+
+                            // Mark this course as scheduled on the day.
+                            if (!coursesScheduledPerDay.ContainsKey(day))
+                                coursesScheduledPerDay[day] = new HashSet<int>();
+                            coursesScheduledPerDay[day].Add(course.CourseId);
+
+                            scheduledForCourse = true;
+                            break; // Course scheduled on this day; exit the slot loop.
+                        }
+                    }
+
+                    if (scheduledForCourse)
+                        break; // Proceed to the next course.
+                }
+
+                if (!scheduledForCourse)
+                {
+                    plan.IsValid = false;
+                    plan.ErrorMessage = $"Not enough slots/rooms available to schedule all exam groups concurrently for course {course.CourseName}.";
+                    return plan;
+                }
+                else
+                {
+                    plan.MultipleCourseAssignments[course.CourseId] = assignmentsForCourse;
+                }
+            }
+
+            plan.IsValid = true;
+            return plan;
+        }
+
+        #endregion
+
+        #region Helper Methods
         private async Task<AspNetUser> GetAvailableProctorAsync(DateTime examDate, int slotId)
         {
-            // Find teachers who aren't already assigned to proctor exams at this time
             var busyTeacherIds = await _context.ExamSchedules
                 .Where(es => es.ExamDate.Date == examDate.Date && es.SlotId == slotId)
                 .Select(es => es.TeacherId)
                 .Distinct()
                 .ToListAsync();
 
-            // Find a teacher who is available (not already proctoring)
             var availableTeacher = await _context.Users
                 .Where(u => !busyTeacherIds.Contains(u.Id))
                 .Join(_context.UserRoles,
-                        u => u.Id,
-                        ur => ur.UserId,
-                        (u, ur) => new { User = u, RoleId = ur.RoleId })
+                      u => u.Id,
+                      ur => ur.UserId,
+                      (u, ur) => new { User = u, RoleId = ur.RoleId })
                 .Join(_context.Roles,
-                        ur => ur.RoleId,
-                        r => r.Id,
-                        (ur, r) => new { User = ur.User, Role = r })
+                      ur => ur.RoleId,
+                      r => r.Id,
+                      (ur, r) => new { User = ur.User, Role = r })
                 .Where(x => x.Role.Name == "Teacher")
                 .Select(x => x.User)
                 .FirstOrDefaultAsync();
 
             _logger.LogInformation($"Selected proctor with Id: {availableTeacher?.Id}");
-
             return availableTeacher;
         }
 
-
-
-        // Updated method to get scheduled exam info by exam name
         private async Task<List<ScheduledExamInfo>> GetScheduledExamInfoByExamNameAsync(string examName)
         {
             return await _context.Exams
@@ -304,64 +389,96 @@ namespace FAPCL.Services.examSchedule
                 .ToListAsync();
         }
 
-
-        public async Task<SchedulingResult> GetScheduleDetailsAsync(int examId)
+        public async Task<DetailedExamResult> GetScheduleDetailsAsync(int examId)
         {
             try
             {
-                // Get the exam to find the session name
-                var exam = await _context.Exams.FindAsync(examId);
+                // Query the exam record by its unique examId and project into DetailedExamInfo.
+                var examDetail = await _context.Exams
+                    .Where(e => e.ExamId == examId)
+                    .Select(e => new DetailedExamInfo
+                    {
+                        ExamId = e.ExamId,
+                        ExamName = e.ExamName,
+                        CourseName = e.Course.CourseName,
+                        ExamDate = e.ExamDate,
+                        SlotId = e.SlotId,
+                        SlotName = e.Slot.SlotName,
+                        StartTime = e.Slot.StartTime,
+                        EndTime = e.Slot.EndTime,
+                        RoomId = e.RoomId,
+                        RoomName = e.Room.RoomName,
+                        // Assume that all exam schedules share the same teacher (proctor).
+                        Teacher = new TeacherInfo
+                        {
+                            TeacherId = e.ExamSchedules.Select(es => es.Teacher.Id).FirstOrDefault(),
+                            TeacherName = e.ExamSchedules
+                                            .Select(es => es.Teacher.FirstName + " " + es.Teacher.LastName)
+                                            .FirstOrDefault() ?? "Not assigned"
+                        },
+                        // Build the list of students for this exam.
+                        Students = e.ExamSchedules
+                                    .Select(es => new StudentInfo
+                                    {
+                                        StudentId = es.Student.Id,
+                                        StudentName = es.Student.FirstName + " " + es.Student.LastName
+                                    })
+                                    .ToList()
+                    })
+                    .FirstOrDefaultAsync();
 
-                if (exam == null)
+                if (examDetail == null)
                 {
-                    return new SchedulingResult
+                    return new DetailedExamResult
                     {
                         Success = false,
                         Message = "Exam not found"
                     };
                 }
 
-                // Get all exams with the same ExamName (they belong to the same scheduling session)
-                var scheduledExams = await GetScheduledExamInfoByNameAsync(exam.ExamName);
-
-                return new SchedulingResult
+                return new DetailedExamResult
                 {
                     Success = true,
+                    Message = "Exam details retrieved successfully",
                     ScheduleId = examId,
-                    ScheduledExams = scheduledExams
+                    DetailedExam = new List<DetailedExamInfo> { examDetail }
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Error retrieving schedule details for ID {examId}");
-
-                return new SchedulingResult
+                _logger.LogError(ex, $"Error retrieving exam details for exam id {examId}");
+                return new DetailedExamResult
                 {
                     Success = false,
-                    Message = "An error occurred while retrieving schedule details"
+                    Message = "An error occurred while retrieving exam details: " + ex.Message
                 };
             }
         }
 
-        public async Task<List<CourseDTO>> GetCoursesAsync()
-        {
-            return await _context.Courses
-                .Select(c => new CourseDTO
-                {
-                    CourseId = c.CourseId, // Fix property name inconsistency
-                    CourseName = c.CourseName,
-                    Description = c.Description,
-                })
-                .OrderBy(c => c.CourseName)
-                .ToListAsync();
-        }
 
-        #region Helper Methods
+
+        // public async Task<List<CourseDTO>> GetCoursesAsync(DateTime startDate, DateTime endDate)
+        // {
+        //     return await _context.Courses
+        //         .Where(c => _context.StudentClasses
+        //                       .Any(sc => sc.Class.CourseId == c.CourseId
+        //                                  && sc.Status == "Enrolled"
+        //                                  && sc.EnrollmentDate >= startDate
+        //                                  && sc.EnrollmentDate <= endDate))
+        //         .Select(c => new CourseDTO
+        //         {
+        //             CourseId = c.CourseId,
+        //             CourseName = c.CourseName,
+        //             Description = c.Description,
+        //         })
+        //         .OrderBy(c => c.CourseName)
+        //         .ToListAsync();
+        // }
+
 
         private async Task<Dictionary<int, List<string>>> GetEnrolledStudentsForCoursesAsync(List<int> courseIds)
         {
             var result = new Dictionary<int, List<string>>();
-
             foreach (var courseId in courseIds)
             {
                 var studentIds = await _context.StudentClasses
@@ -369,10 +486,8 @@ namespace FAPCL.Services.examSchedule
                     .Select(sc => sc.StudentId)
                     .Distinct()
                     .ToListAsync();
-
                 result[courseId] = studentIds;
             }
-
             return result;
         }
 
@@ -380,8 +495,6 @@ namespace FAPCL.Services.examSchedule
         {
             var slots = await _context.Slots.ToListAsync();
             var result = new List<SlotWithDateInfo>();
-
-            // Generate all possible date/slot combinations in the range
             for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
             {
                 foreach (var slot in slots)
@@ -396,7 +509,6 @@ namespace FAPCL.Services.examSchedule
                     });
                 }
             }
-
             return result;
         }
 
@@ -404,14 +516,12 @@ namespace FAPCL.Services.examSchedule
         {
             try
             {
-                // Get only classrooms (RoomTypeId == 1) that are available
                 var rooms = await _context.Rooms
                     .Where(r => r.RoomTypeId == 1
                                 && r.Status == "Available"
                                 && (r.IsAction == true || r.IsAction == null))
                     .OrderByDescending(r => r.Capacity)
                     .ToListAsync();
-
                 _logger.LogInformation($"Available room IDs: {string.Join(", ", rooms.Select(r => r.RoomId))}");
                 return rooms;
             }
@@ -425,150 +535,39 @@ namespace FAPCL.Services.examSchedule
         private Dictionary<int, List<int>> BuildCourseConflictGraph(Dictionary<int, List<string>> courseStudentMap)
         {
             var graph = new Dictionary<int, List<int>>();
-
-            // Initialize graph
             foreach (var courseId in courseStudentMap.Keys)
             {
                 graph[courseId] = new List<int>();
             }
-
-            // Create edges between courses that share students
             var courseIds = courseStudentMap.Keys.ToList();
-
             for (int i = 0; i < courseIds.Count; i++)
             {
                 for (int j = i + 1; j < courseIds.Count; j++)
                 {
                     var course1 = courseIds[i];
                     var course2 = courseIds[j];
-
                     var studentsInCourse1 = courseStudentMap[course1];
                     var studentsInCourse2 = courseStudentMap[course2];
-
-                    // Check if there are common students
                     if (studentsInCourse1.Intersect(studentsInCourse2).Any())
                     {
-                        // These courses have common students, so they can't be scheduled at the same time
                         graph[course1].Add(course2);
                         graph[course2].Add(course1);
                     }
                 }
             }
-
             return graph;
         }
 
-        private SchedulingPlan GenerateSchedulingPlan(
-    List<Course> courses,
-    Dictionary<int, List<int>> conflictGraph,
-    Dictionary<int, List<string>> courseStudentMap,
-    List<SlotWithDateInfo> availableSlots,
-    List<Room> availableRooms)
+        private static List<List<T>> Chunk<T>(List<T> source, int chunkSize)
         {
-            var plan = new SchedulingPlan();
-
-            _logger.LogInformation($"Available rooms for scheduling: {string.Join(", ", availableRooms.Select(r => r.RoomId))}");
-
-            if (!availableRooms.Any())
+            var chunks = new List<List<T>>();
+            for (int i = 0; i < source.Count; i += chunkSize)
             {
-                plan.IsValid = false;
-                plan.ErrorMessage = "No available rooms for scheduling";
-                return plan;
+                chunks.Add(source.GetRange(i, Math.Min(chunkSize, source.Count - i)));
             }
-
-            // Sort courses by complexity (number of conflicts, then student count)
-            var sortedCourses = courses
-                .OrderByDescending(c => conflictGraph[c.CourseId].Count)
-                .ThenByDescending(c => courseStudentMap[c.CourseId].Count)
-                .ToList();
-
-            var assignedSlots = new Dictionary<int, SlotWithDateInfo>();
-            var usedRoomsInSlot = new Dictionary<string, HashSet<int>>();
-
-            foreach (var course in sortedCourses)
-            {
-                // Get conflicts for this course
-                var conflicts = conflictGraph[course.CourseId];
-
-                // Get previously used slots by conflicting courses
-                var conflictingSlotKeys = conflicts
-                    .Where(assignedSlots.ContainsKey)
-                    .Select(c => $"{assignedSlots[c].Date:yyyy-MM-dd}_{assignedSlots[c].SlotId}")
-                    .ToHashSet();
-
-                SlotWithDateInfo selectedSlot = null;
-                Room selectedRoom = null;
-
-                // For scheduling exam, use effective count = min(total enrollment, 15)
-                int actualCount = courseStudentMap[course.CourseId].Count;
-                int effectiveCount = actualCount > 15 ? 15 : actualCount;
-
-                foreach (var slot in availableSlots)
-                {
-                    var slotKey = $"{slot.Date:yyyy-MM-dd}_{slot.SlotId}";
-
-                    if (conflictingSlotKeys.Contains(slotKey))
-                        continue;
-
-                    if (!usedRoomsInSlot.ContainsKey(slotKey))
-                        usedRoomsInSlot[slotKey] = new HashSet<int>();
-
-                    foreach (var room in availableRooms)
-                    {
-                        if (usedRoomsInSlot[slotKey].Contains(room.RoomId))
-                            continue;
-
-                        int effectiveCapacity = Math.Min(room.Capacity, 15);
-                        if (effectiveCapacity < effectiveCount)
-                            continue;
-
-                        // Suitable room found
-                        selectedRoom = room;
-                        selectedSlot = slot;
-                        usedRoomsInSlot[slotKey].Add(room.RoomId);
-                        break;
-                    }
-
-                    if (selectedRoom != null)
-                        break;
-                }
-
-                if (selectedSlot == null || selectedRoom == null)
-                {
-                    plan.IsValid = false;
-                    plan.ErrorMessage = $"Could not find an available slot and room for course {course.CourseName}";
-                    return plan;
-                }
-
-                _logger.LogInformation($"Scheduled course {course.CourseId} in room {selectedRoom.RoomId} on {selectedSlot.Date.ToShortDateString()} slot {selectedSlot.SlotId}");
-
-                plan.CourseAssignments[course.CourseId] = new CourseScheduleAssignment
-                {
-                    CourseId = course.CourseId,
-                    SlotInfo = selectedSlot,
-                    RoomId = selectedRoom.RoomId,
-                    StudentIds = courseStudentMap[course.CourseId] // full enrollment; will split later
-                };
-
-                if (plan.CourseAssignments[course.CourseId].RoomAssignments == null)
-                {
-                    plan.CourseAssignments[course.CourseId].RoomAssignments = new Dictionary<int, List<string>>
-            {
-                { selectedRoom.RoomId, courseStudentMap[course.CourseId] }
-            };
-                }
-
-                assignedSlots[course.CourseId] = selectedSlot;
-            }
-
-            plan.IsValid = true;
-            return plan;
+            return chunks;
         }
 
-
-
-
-        // New method to get scheduled exams by exam name
         private async Task<List<ScheduledExamInfo>> GetScheduledExamInfoByNameAsync(string examName)
         {
             return await _context.Exams
@@ -595,22 +594,9 @@ namespace FAPCL.Services.examSchedule
         }
 
         #endregion
-
-        private static List<List<T>> Chunk<T>(List<T> source, int chunkSize)
-        {
-            var chunks = new List<List<T>>();
-            for (int i = 0; i < source.Count; i += chunkSize)
-            {
-                chunks.Add(source.GetRange(i, Math.Min(chunkSize, source.Count - i)));
-            }
-            return chunks;
-        }
-
     }
 
     #region Helper Classes
-
-
 
     public class SlotWithDateInfo
     {
@@ -625,8 +611,7 @@ namespace FAPCL.Services.examSchedule
     {
         public bool IsValid { get; set; }
         public string ErrorMessage { get; set; }
-        public Dictionary<int, CourseScheduleAssignment> CourseAssignments { get; set; } =
-            new Dictionary<int, CourseScheduleAssignment>();
+        public Dictionary<int, List<CourseScheduleAssignment>> MultipleCourseAssignments { get; set; } = new Dictionary<int, List<CourseScheduleAssignment>>();
     }
 
     public class CourseScheduleAssignment
@@ -634,11 +619,11 @@ namespace FAPCL.Services.examSchedule
         public int CourseId { get; set; }
         public SlotWithDateInfo SlotInfo { get; set; }
         public int RoomId { get; set; }
-        public Dictionary<int, List<string>> RoomAssignments { get; set; } // RoomId -> List of StudentIds
-        public List<string> StudentIds { get; set; } // All students for this course
+        // RoomAssignments is available for potential extension.
+        public Dictionary<int, List<string>> RoomAssignments { get; set; }
+        // Holds the enrolled students for the course (to be chunked later).
+        public List<string> StudentIds { get; set; }
     }
-
-
 
     #endregion
 }

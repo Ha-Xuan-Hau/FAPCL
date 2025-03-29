@@ -10,8 +10,8 @@ namespace FAPCL.Services.examSchedule
             DateTime startDate, 
             DateTime endDate);
             
-        Task<SchedulingResult> GetScheduleDetailsAsync(int scheduleId);
+        Task<DetailedExamResult> GetScheduleDetailsAsync(int scheduleId);
         
-        Task<List<CourseDTO>> GetCoursesAsync();
+    //    Task<List<CourseDTO>> GetCoursesAsync(DateTime startDate, DateTime endDate);
     }
 }
