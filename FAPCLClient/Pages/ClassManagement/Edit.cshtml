@@ -1,0 +1,73 @@
+﻿@page
+@model EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa lớp học";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<h1 class="text-center">Chỉnh sửa lớp học</h1>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<form method="post">
+    <input type="hidden" asp-for="ClassDto.ClassId" />
+
+    <div class="mb-3">
+        <label class="form-label">Tên Lớp</label>
+        <input type="text" asp-for="ClassDto.ClassName" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ngày Bắt Đầu</label>
+        <input type="date" asp-for="StartDate" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ngày Kết Thúc</label>
+        <input type="date" asp-for="EndDate" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Khóa Học</label>
+        <select asp-for="ClassDto.CourseId" class="form-control" required>
+            <option value="">-- Chọn khóa học --</option>
+            @foreach (var course in Model.Courses)
+            {
+                <option value="@course.CourseId">@course.CourseName</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Giáo Viên</label>
+        <select asp-for="ClassDto.TeacherId" class="form-control" required>
+            <option value="">-- Chọn giáo viên --</option>
+            @foreach (var teacher in Model.Teachers)
+            {
+                <option value="@teacher.Id">@teacher.UserName</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Phòng học</label>
+        <select asp-for="ClassDto.RoomId" class="form-control" required>
+            <option value="">-- Chọn phòng học --</option>
+            @foreach (var room in Model.Rooms)
+            {
+                <option value="@room.RoomId">@($"{room.RoomName} (Sức chứa: {room.Capacity} SV)")</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+    <a asp-page="./Index" class="btn btn-secondary">Hủy</a>
+</form>
