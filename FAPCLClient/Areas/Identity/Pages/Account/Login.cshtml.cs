@@ -116,9 +116,22 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return Page();
+                // Đọc thông báo lỗi từ API
+                var responseData = await response.Content.ReadAsStringAsync();
+                var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseData);
+
+                if (errorResponse != null && errorResponse.ContainsKey("Message"))
+                {
+                    string message = errorResponse["Message"];
+                    Console.WriteLine($"Error: {message}");
+                    ModelState.AddModelError(string.Empty, message); // Thêm vào ModelState nếu cần
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "An unknown error occurred.");
+                }
             }
+            return Page();
         }
 
         public class TokenResponse

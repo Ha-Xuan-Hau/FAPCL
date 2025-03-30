@@ -1,3 +1,4 @@
+using System.Net;
 using FAPCLClient.Model;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,10 @@ builder.Services.AddHttpClient("FAPCL", client =>
 });
 builder.Services.AddSession();
 builder.Services.AddSignalR();
-
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Listen(IPAddress.Any, 7005); // Đảm bảo ứng dụng lắng nghe trên cổng 7005
+});
 
 var app = builder.Build();
 

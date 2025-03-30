@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Http
 @inject IHttpContextAccessor HttpContextAccessor
 
 <ul class="navbar-nav">
@@ -8,33 +8,16 @@
             <span class="nav-link text-dark">Hello, @HttpContextAccessor.HttpContext.Session.GetString("UserName")!</span>
         </li>
         <li class="nav-item">
-            <button id="logout" class="nav-link btn btn-link text-dark border-0">Logout</button>
+            <a class="nav-link text-dark" id="Logout" asp-area="Identity" asp-page="/Account/Logout">Logout</a>
         </li>
     }
     else
     {
         <li class="nav-item">
             <a class="nav-link text-dark" id="register" asp-area="Identity" asp-page="/Account/Register">Register</a>
-        </li>
-        <li class="nav-item">
+        </li>        <li class="nav-item">
             <a class="nav-link text-dark" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
         </li>
     }
 </ul>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Kiểm tra nếu có nút logout
-            var logoutButton = document.getElementById("logout");
-            if (logoutButton) {
-                logoutButton.addEventListener("click", function () {
-                    // Xóa token khỏi HttpContext.Session hoặc sessionStorage
-                    sessionStorage.removeItem('Token'); // Hoặc sử dụng HttpContext.Session nếu bạn cần phía server
-                    console.log("Logging out...");
-                    location.reload(); // Làm mới trang để cập nhật giao diện
-                });
-            }
-        });
-    </script>
-}
