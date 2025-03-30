@@ -1,0 +1,59 @@
+<changelist name="Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1" date="1743344026280" recycled="true" deleted="true">
+  <option name="PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/shelved.patch" />
+  <option name="DESCRIPTION" value="Uncommitted changes before Merge at 3/30/2025 9:11 PM [Changes]" />
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.csproj.AssemblyReference.cache" />
+    <option name="AFTER_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.csproj.AssemblyReference.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCL.csproj.AssemblyReference.cache" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCLClient/obj/project.nuget.cache" />
+    <option name="AFTER_PATH" value="FAPCLClient/obj/project.nuget.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/project.nuget.cache" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCLClient/obj/Debug/net8.0/FAPCLClient.csproj.AssemblyReference.cache" />
+    <option name="AFTER_PATH" value="FAPCLClient/obj/Debug/net8.0/FAPCLClient.csproj.AssemblyReference.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCLClient.csproj.AssemblyReference.cache" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.csproj.CoreCompileInputs.cache" />
+    <option name="AFTER_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.csproj.CoreCompileInputs.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCL.csproj.CoreCompileInputs.cache" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCLClient/obj/Debug/net8.0/FAPCLClient.AssemblyInfoInputs.cache" />
+    <option name="AFTER_PATH" value="FAPCLClient/obj/Debug/net8.0/FAPCLClient.AssemblyInfoInputs.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCLClient.AssemblyInfoInputs.cache" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.pdb" />
+    <option name="AFTER_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.pdb" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCL.pdb" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.dll" />
+    <option name="AFTER_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.dll" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCL.dll" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCL/obj/Debug/net8.0/apphost.exe" />
+    <option name="AFTER_PATH" value="FAPCL/obj/Debug/net8.0/apphost.exe" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/apphost.exe" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.AssemblyInfoInputs.cache" />
+    <option name="AFTER_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.AssemblyInfoInputs.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCL.AssemblyInfoInputs.cache" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCLClient/obj/Debug/net8.0/FAPCLClient.assets.cache" />
+    <option name="AFTER_PATH" value="FAPCLClient/obj/Debug/net8.0/FAPCLClient.assets.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCLClient.assets.cache" />
+  </binary>
+  <binary>
+    <option name="BEFORE_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.assets.cache" />
+    <option name="AFTER_PATH" value="FAPCL/obj/Debug/net8.0/FAPCL.assets.cache" />
+    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/.idea.FAPCL/.idea/shelf/Uncommitted_changes_before_Merge_at_3_30_2025_9_11_PM_[Changes]1/FAPCL.assets.cache" />
+  </binary>
+</changelist>
