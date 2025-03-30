@@ -17,6 +17,7 @@ namespace FAPCL.DTO.ExamSchedule
         public int ExamId { get; set; }
         public string ExamName { get; set; }
         public string CourseName { get; set; }
+        public string CourseDescription { get; set; }
         public DateTime ExamDate { get; set; }
         public int SlotId { get; set; }
         public string SlotName { get; set; }

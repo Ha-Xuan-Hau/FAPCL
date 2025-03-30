@@ -539,6 +539,7 @@ namespace FAPCL.Services.examSchedule
                         ExamId = e.ExamId,
                         ExamName = e.ExamName,
                         CourseName = e.Course.CourseName,
+                        CourseDescription = e.Course.Description,
                         ExamDate = e.ExamDate,
                         SlotId = e.SlotId,
                         SlotName = e.Slot.SlotName,
@@ -593,25 +594,70 @@ namespace FAPCL.Services.examSchedule
             }
         }
 
+        public async Task<SchedulingResult> ListExamsAsync(DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                var exams = await _context.Exams
+                    .Where(e => e.ExamDate >= startDate && e.ExamDate <= endDate)
+                    .Select(e => new ScheduledExamInfo
+                    {
+                        ExamId = e.ExamId,
+                        ExamName = e.ExamName,
+                        CourseName = e.Course.CourseName,
+                        Description = e.Course.Description,
+                        ExamDate = e.ExamDate,
+                        SlotId = e.SlotId,
+                        SlotName = e.Slot.SlotName,
+                        StartTime = e.Slot.StartTime,
+                        EndTime = e.Slot.EndTime,
+                        RoomId = e.RoomId,
+                        RoomName = e.Room.RoomName,
+                        StudentCount = e.ExamSchedules.Count,
+                        TeacherName = e.ExamSchedules
+                                       .Select(es => es.Teacher.FirstName + " " + es.Teacher.LastName)
+                                       .FirstOrDefault() ?? "Not assigned"
+                    })
+                    .OrderBy(e => e.ExamDate)
+                    .ThenBy(e => e.StartTime)
+                    .ToListAsync();
+
+                return new SchedulingResult
+                {
+                    Success = true,
+                    Message = "Exams retrieved successfully",
+                    ScheduledExams = exams
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving exam schedules");
+                return new SchedulingResult
+                {
+                    Success = false,
+                    Message = "An error occurred while retrieving exam schedules: " + ex.Message
+                };
+            }
+        }
 
 
-        // public async Task<List<CourseDTO>> GetCoursesAsync(DateTime startDate, DateTime endDate)
-        // {
-        //     return await _context.Courses
-        //         .Where(c => _context.StudentClasses
-        //                       .Any(sc => sc.Class.CourseId == c.CourseId
-        //                                  && sc.Status == "Enrolled"
-        //                                  && sc.EnrollmentDate >= startDate
-        //                                  && sc.EnrollmentDate <= endDate))
-        //         .Select(c => new CourseDTO
-        //         {
-        //             CourseId = c.CourseId,
-        //             CourseName = c.CourseName,
-        //             Description = c.Description,
-        //         })
-        //         .OrderBy(c => c.CourseName)
-        //         .ToListAsync();
-        // }
+        public async Task<List<CourseDTO>> GetCoursesAsync(DateTime startDate, DateTime endDate)
+        {
+            return await _context.Courses
+                .Where(c => _context.StudentClasses
+                              .Any(sc => sc.Class.CourseId == c.CourseId
+                                         && sc.Status == "Enrolled"
+                                         && sc.EnrollmentDate >= startDate
+                                         && sc.EnrollmentDate <= endDate))
+                .Select(c => new CourseDTO
+                {
+                    CourseId = c.CourseId,
+                    CourseName = c.CourseName,
+                    Description = c.Description,
+                })
+                .OrderBy(c => c.CourseName)
+                .ToListAsync();
+        }
 
         #endregion
     }
