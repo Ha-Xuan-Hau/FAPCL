@@ -1,4 +1,4 @@
-using FAPCLClient.Model.DTOs;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FAPCLClient.Model;
+using FAPCL.DTO.ExamSchedule;
 
 namespace FAPCLClient.Pages.ExamScheduleManagement
 {
@@ -56,7 +57,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
             {
                 // Set initial values
                 StartDate = DateTime.Today;
-                EndDate = DateTime.Today.AddDays(7);
+                EndDate = DateTime.Today.AddDays(13);
 
                 // Load courses
                 var courses = await GetCoursesAsync();
@@ -101,7 +102,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                 }
 
                 TimeSpan duration = EndDate - StartDate;
-                if (duration.TotalDays > 13) // 14 days inclusive
+                if (duration.TotalDays > 14) // 14 days inclusive
                 {
                     ModelState.AddModelError("EndDate", "Exam period cannot exceed 14 days");
                     await LoadCoursesData();
@@ -137,7 +138,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                 }
 
                 // Redirect to details page
-                return RedirectToPage("Details", new { id = result.ScheduleId });
+                return RedirectToPage("Index");
             }
             catch (Exception ex)
             {
@@ -151,22 +152,22 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private async Task LoadCoursesData()
         {
             var courses = await GetCoursesAsync();
-            AvailableCourses = new SelectList(courses ?? new List<Course>(), "CourseId", "CourseName");
+            AvailableCourses = new SelectList(courses ?? new List<CourseDTO>(), "CourseId", "CourseName");
         }
 
         #region API Calls
 
-        private async Task<List<Course>> GetCoursesAsync()
+        private async Task<List<CourseDTO>> GetCoursesAsync()
         {
             try
             {
                 var client = CreateHttpClient();
-                var response = await client.GetAsync("api/examschedule/courses");
+                var response = await client.GetAsync("ExamSchedule/currentSemeterCourses");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<List<Course>>(content, _jsonOptions);
+                    return JsonSerializer.Deserialize<List<CourseDTO>>(content, _jsonOptions);
                 }
 
                 ErrorMessage = $"Failed to load courses: {response.ReasonPhrase}";
@@ -189,7 +190,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                 var json = JsonSerializer.Serialize(request);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync("api/examschedule", content);
+                var response = await client.PostAsync("ExamSchedule", content);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
@@ -210,15 +211,18 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private HttpClient CreateHttpClient()
         {
             var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
+            var baseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                throw new Exception("ApiSettings:BaseUrl is not configured.");
+            }
+            client.BaseAddress = new Uri(baseUrl);
 
-            // Get the token from the user claims
             var token = User.FindFirst("token")?.Value;
             if (!string.IsNullOrEmpty(token))
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
-
             return client;
         }
 

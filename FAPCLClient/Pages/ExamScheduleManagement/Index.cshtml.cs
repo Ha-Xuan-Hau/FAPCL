@@ -1,3 +1,4 @@
+using FAPCL.DTO.ExamSchedule;
 using FAPCLClient.Model;
 using FAPCLClient.Model.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,17 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
 
         public List<ExamListItem> Exams { get; set; } = new List<ExamListItem>();
         public string ErrorMessage { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime StartDate { get; set; } = DateTime.Today;
+        [BindProperty(SupportsGet = true)]
+        public DateTime EndDate { get; set; } = DateTime.Today.AddDays(+14);
+
+        [BindProperty(SupportsGet = true)]
+        public int CurrentPage { get; set; } = 1;
+
+        public int TotalPages { get; set; }
+        private const int PageSize = 10;
 
         public IndexModel(
             IHttpClientFactory httpClientFactory,
@@ -36,11 +48,26 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         {
             try
             {
-                // Load all exams
                 var exams = await GetAllExamsAsync();
                 if (exams != null)
                 {
-                    Exams = exams;
+                    // Sort the full list first.
+                    exams = exams.OrderByDescending(e => e.ExamDate)
+                                 .ThenBy(e => e.StartTime)
+                                 .ToList();
+
+                    int totalExamCount = exams.Count;
+                    TotalPages = (int)Math.Ceiling((double)totalExamCount / PageSize);
+                    if (CurrentPage < 1)
+                        CurrentPage = 1;
+                    if (CurrentPage > TotalPages)
+                        CurrentPage = TotalPages;
+
+                    // Now paginate on the already sorted list.
+                    Exams = exams
+                        .Skip((CurrentPage - 1) * PageSize)
+                        .Take(PageSize)
+                        .ToList();
                 }
                 return Page();
             }
@@ -52,12 +79,15 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
             }
         }
 
+        #region API Calls
+
         private async Task<List<ExamListItem>> GetAllExamsAsync()
         {
             try
             {
                 var client = CreateHttpClient();
-                var response = await client.GetAsync("api/examschedule/list");
+                // Pass startDate and endDate as query parameters if your API supports that.
+                var response = await client.GetAsync($"ExamSchedule/list?startDate={StartDate:yyyy-MM-dd}&endDate={EndDate:yyyy-MM-dd}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -79,31 +109,20 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private HttpClient CreateHttpClient()
         {
             var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
+            var baseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                throw new Exception("ApiSettings:BaseUrl is not configured.");
+            }
+            client.BaseAddress = new Uri(baseUrl);
 
-            // Get the token from the user claims
             var token = User.FindFirst("token")?.Value;
             if (!string.IsNullOrEmpty(token))
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
-
             return client;
         }
-    }
-
-    // DTO to represent items in the exam list
-    public class ExamListItem
-    {
-        public int ExamId { get; set; }
-        public string ExamName { get; set; }
-        public string CourseName { get; set; }
-        public string CourseDescription { get; set; }
-        public DateTime ExamDate { get; set; }
-        public string SlotName { get; set; }
-        public TimeSpan StartTime { get; set; }
-        public TimeSpan EndTime { get; set; }
-        public string RoomName { get; set; }
-        public int StudentCount { get; set; }
+        #endregion
     }
 }

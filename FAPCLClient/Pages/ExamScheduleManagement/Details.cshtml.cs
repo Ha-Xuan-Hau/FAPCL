@@ -5,8 +5,9 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using FAPCLClient.Model;
 using FAPCLClient.Model.DTOs;
+using FAPCL.DTO.ExamSchedule;
 
-namespace FAPCLClient.Pages.ExamScheduleManagement  
+namespace FAPCLClient.Pages.ExamScheduleManagement
 {
     public class DetailsModel : PageModel
     {
@@ -18,7 +19,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
 
-        public List<ScheduledExamDTO> ScheduledExams { get; set; }
+        public List<DetailedExamInfo> ExamInfos { get; set; }
         public string ExamName { get; set; }
         public string ErrorMessage { get; set; }
 
@@ -41,23 +42,47 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         {
             try
             {
+                _logger.LogInformation($"Retrieving exam schedule details for ID: {Id}");
+
                 var result = await GetScheduleDetailsAsync(Id);
 
-                if (result == null || !result.Success)
+                if (result == null)
                 {
-                    ErrorMessage = result?.Message ?? "Failed to retrieve schedule details.";
+                    ErrorMessage = "Failed to retrieve schedule details due to a system error.";
+                    _logger.LogWarning("GetScheduleDetailsAsync returned null");
                     return Page();
                 }
 
-                ScheduledExams = result.ScheduledExams;
-
-                if (ScheduledExams != null && ScheduledExams.Any())
+                if (!result.Success)
                 {
-                    // Extract the exam name from the first exam
-                    var examNameParts = ScheduledExams.First().ExamName?.Split("[Session:");
-                    ExamName = examNameParts?.Length > 0 ? examNameParts[0].Trim() : "Exam Schedule";
+                    // Clean up the error message if it contains the raw API response
+                    if (result.Message.Contains("API Error: NotFound"))
+                    {
+                        ErrorMessage = "The requested exam schedule could not be found.";
+                    }
+                    else
+                    {
+                        ErrorMessage = result.Message;
+                    }
+
+                    _logger.LogWarning($"Failed to retrieve schedule: {ErrorMessage}");
+                    return Page();
                 }
 
+                ExamInfos = result.DetailedExam;
+
+                if (ExamInfos == null || !ExamInfos.Any())
+                {
+                    ErrorMessage = "No exam information available for this schedule.";
+                    return Page();
+                }
+
+                // Extract the exam name from the first exam
+                var firstExam = ExamInfos.First();
+                var examNameParts = firstExam.ExamName?.Split("[Session:");
+                ExamName = examNameParts?.Length > 0 ? examNameParts[0].Trim() : "Exam Schedule";
+
+                _logger.LogInformation($"Successfully retrieved details for {ExamInfos.Count} exam(s)");
                 return Page();
             }
             catch (Exception ex)
@@ -68,54 +93,69 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
             }
         }
 
-        private async Task<SchedulingResult> GetScheduleDetailsAsync(int scheduleId)
+        #region API Calls
+        private async Task<DetailedExamResult> GetScheduleDetailsAsync(int scheduleId)
         {
             try
             {
                 var client = CreateHttpClient();
-                var response = await client.GetAsync($"api/examschedule/{scheduleId}");
+                var response = await client.GetAsync($"ExamSchedule/{scheduleId}");
+
+                var content = await response.Content.ReadAsStringAsync();
+                _logger.LogDebug($"API Response: {content}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<SchedulingResult>(content, _jsonOptions);
+                    var result = JsonSerializer.Deserialize<DetailedExamResult>(content, _jsonOptions);
+                    return result;
                 }
 
-                _logger.LogWarning("API returned non-success status code: {StatusCode}", response.StatusCode);
-                return new SchedulingResult { Success = false, Message = await response.Content.ReadAsStringAsync() };
+                // Special handling for NotFound (404) errors
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return new DetailedExamResult
+                    {
+                        Success = false,
+                        Message = "The requested exam schedule could not be found. It may have been deleted or never existed."
+                    };
+                }
+
+                _logger.LogWarning($"API returned non-success status code: {response.StatusCode}");
+                return new DetailedExamResult
+                {
+                    Success = false,
+                    Message = $"API Error: {response.StatusCode} - {content}"
+                };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving schedule details");
-                return new SchedulingResult { Success = false, Message = "An error occurred while communicating with the API" };
+                return new DetailedExamResult
+                {
+                    Success = false,
+                    Message = $"Communication error: {ex.Message}"
+                };
             }
         }
+
 
         private HttpClient CreateHttpClient()
         {
             var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri(_configuration["ApiSettings:BaseUrl"]);
+            var baseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrEmpty(baseUrl))
+            {
+                throw new Exception("ApiSettings:BaseUrl is not configured.");
+            }
+            client.BaseAddress = new Uri(baseUrl);
 
-            // Get the token from the user claims
             var token = User.FindFirst("token")?.Value;
             if (!string.IsNullOrEmpty(token))
             {
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
-
             return client;
         }
-
-        public async Task<IActionResult> OnPostExportPdfAsync()
-        {
-            // Implement PDF export functionality here
-            return RedirectToPage();
-        }
-
-        public async Task<IActionResult> OnPostExportExcelAsync()
-        {
-            // Implement Excel export functionality here
-            return RedirectToPage();
-        }
+        #endregion
     }
 }
