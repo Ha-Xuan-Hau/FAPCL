@@ -4,9 +4,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Ebay_Project_PRN.Helper;
 using FAPCL.Mapping;
+using AutoMapper;
+using FAPCL.Controllers;
+using FAPCL.Help;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -27,26 +32,16 @@ builder.Services.AddIdentity<AspNetUser, IdentityRole>()
 
 // Cấu hình EmailSettings và EmailSender
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddSingleton<EmailSender>(); 
+// builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
+});
 
 // Đăng ký thêm RoleManager và UserManager cho Identity
 builder.Services.AddScoped<UserManager<AspNetUser>>();
 builder.Services.AddScoped<RoleManager<IdentityRole>>();
-
-// Cấu hình Authentication với Bearer Token
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidateAudience = true,
-            ValidAudience = jwtSettings["Audience"],
-            ValidateLifetime = true,
-            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings["Key"]))
-        };
-    });
 
 // Cấu hình Authorization
 builder.Services.AddAuthorization();
@@ -76,6 +71,26 @@ builder.Services.AddSwaggerGen(options =>
             new string[] { }
         }
     });
+});
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"])),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        ValidateLifetime = true
+    };
 });
 
 builder.Services.AddScoped<IBookingService, BookingService>();

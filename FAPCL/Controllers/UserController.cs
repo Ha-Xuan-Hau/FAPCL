@@ -2,11 +2,13 @@
 using FAPCL.Model.CustomModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using FAPCL.Help;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FAPCL.Controllers
 {
@@ -16,16 +18,19 @@ namespace FAPCL.Controllers
     {
         private readonly UserManager<AspNetUser> _userManager;
         private readonly SignInManager<AspNetUser> _signInManager;
+        private readonly EmailSender _emailSender;
         private readonly IConfiguration _configuration;
 
         public UserController(
                     UserManager<AspNetUser> userManager,
                     SignInManager<AspNetUser> signInManager,
-                    IConfiguration configuration)
+                    IConfiguration configuration,
+                    EmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _emailSender = emailSender;
         }
 
         [HttpPost("register")]
@@ -35,7 +40,7 @@ namespace FAPCL.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            
             var user = new AspNetUser
             {
                 UserName = model.Email,
@@ -46,26 +51,42 @@ namespace FAPCL.Controllers
                 Address = model.Address,
                 CreatedAt = DateTime.UtcNow
             };
-
             var result = await _userManager.CreateAsync(user, model.Password);
+            
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var callbackUrl = Url.Action(
+                "ConfirmEmail", 
+                "User", 
+                new { userId = user.Id, code = WebUtility.UrlEncode(code) }, 
+                Request.Scheme);
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    model.Email,
+                    "Confirm your email",
+                    $"Please confirm your account by <a href='{callbackUrl}'>clicking here</a>."
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Error sending email: " + ex.Message });
+            }
             if (!result.Succeeded)
             {
                 return BadRequest(result.Errors);
             }
-
             if (!string.IsNullOrEmpty(model.Role))
             {
                 await _userManager.AddToRoleAsync(user, model.Role);
             }
             else
             {
-                // Nếu role không có giá trị, có thể mặc định là "Client"
                 await _userManager.AddToRoleAsync(user, "Student");
             }
-
-            return Ok(new { Message = "User registered successfully with role" });
+            
+            return Ok(new { Message = "User registered successfully with role. A confirmation email has been sent." });
         }
-
+        
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
@@ -78,6 +99,12 @@ namespace FAPCL.Controllers
             if (user == null)
             {
                 return Unauthorized(new { Message = "Invalid login attempt." });
+            }
+
+            // Kiểm tra nếu email chưa được xác nhận
+            if (!user.EmailConfirmed)
+            {
+                return Unauthorized(new { Message = "Please confirm your email before logging in." });
             }
 
             var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
@@ -113,11 +140,14 @@ namespace FAPCL.Controllers
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.Now.AddHours(1),
+                notBefore: DateTime.Now,
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        
+        [Authorize]
         [HttpGet("userinfo")]
         public async Task<IActionResult> GetUserInfo()
         {         
@@ -142,5 +172,35 @@ namespace FAPCL.Controllers
                 user.Address
             });
         }
+        
+        [HttpGet("confirmemail")]
+        public async Task<IActionResult> ConfirmEmail(string userId, string code)
+        {
+            if (userId == null || code == null)
+            {
+                return BadRequest("User ID and code must be provided.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return BadRequest("User not found.");
+            }
+            var decodedCode = WebUtility.UrlDecode(code); 
+            // user.EmailConfirmed = true;
+            // var updateResult = await _userManager.UpdateAsync(user);
+            var updateResult = await _userManager.ConfirmEmailAsync(user, decodedCode);
+            if (updateResult.Succeeded)
+            {
+                // Nếu xác nhận thành công, redirect người dùng đến dự án FAPCLClient
+                var clientUrl = "https://localhost:7005";  
+                var callbackUrl = $"{clientUrl}/ConfirmEmail?userId={user.Id}&code={decodedCode}";
+                return Redirect(callbackUrl); 
+            }
+
+            return BadRequest("The token is invalid or has expired. Please request a new confirmation email.");
+        }
+
+
     }
-}
+} 
