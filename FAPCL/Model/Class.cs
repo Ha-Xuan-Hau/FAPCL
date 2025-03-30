@@ -22,7 +22,6 @@ namespace FAPCL.Model
 
         public virtual Course Course { get; set; } = null!;
         public virtual Room Room { get; set; } = null!;
-        public virtual Slot Slot { get; set; } = null!;
         public virtual AspNetUser Teacher { get; set; } = null!;
         public virtual ICollection<ClassSchedule> ClassSchedules { get; set; }
         public virtual ICollection<StudentClass> StudentClasses { get; set; }
