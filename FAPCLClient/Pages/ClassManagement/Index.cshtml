@@ -64,7 +64,10 @@
                 <td>@item.TeacherName</td>
                 <td>@item.RoomName</td>
                 <td>
-                    <a asp-page="./Edit" asp-route-id="@item.ClassId" class="btn btn-warning btn-sm">Chi Tiết</a>
+                    <div class="btn-group" role="group">
+                        <a asp-page="./Edit" asp-route-id="@item.ClassId" class="btn btn-warning btn-sm">Chi Tiết</a>
+                        <a asp-page="./EditTeacherSchedule" asp-route-ClassId="@item.ClassId" class="btn btn-info btn-sm">Chỉnh sửa slot dạy</a>
+                    </div>
                 </td>
             </tr>
         }

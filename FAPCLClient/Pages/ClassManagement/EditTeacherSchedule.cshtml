@@ -1,0 +1,64 @@
+﻿@page "{ClassId}"
+@using Newtonsoft.Json
+@model FAPCLClient.Pages.ClassManagement.EditTeacherScheduleModel
+@{
+    ViewData["Title"] = "Chỉnh sửa Lịch Dạy";
+}
+
+<h2>Chỉnh sửa lịch dạy cho lớp: @Model.ClassId</h2>
+
+@if (TempData["Errors"] != null)
+{
+    var errors = JsonConvert.DeserializeObject<List<string>>(TempData["Errors"].ToString());
+    if (errors != null && errors.Any())
+    {
+        <div class="alert alert-danger">
+            @foreach (var error in errors)
+            {
+                <p>@error</p>
+            }
+        </div>
+    }
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        <p>@TempData["Error"]</p>
+    </div>
+}
+
+<a asp-page="./Index" class="btn btn-secondary">Quay lại</a>
+
+<form method="post" asp-page-handler="SaveSchedule">
+    <input type="hidden" name="ClassId" value="@Model.ClassId" />
+
+    <table class="table table-bordered mt-3 text-center">
+        <thead>
+            <tr>
+                <th>Slot \ Ngày</th>
+                @foreach (var day in Model.DaysOfWeek)
+                {
+                    <th>@day</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var slot in Model.AvailableSlots)
+            {
+                <tr>
+                    <td>@slot.SlotName (@slot.StartTime - @slot.EndTime)</td>
+                    @foreach (var day in Model.DaysOfWeek)
+                    {
+                        var isChecked = Model.TeacherSchedules.Any(s => s.DayOfWeek == day && s.SlotId == slot.SlotId);
+                        <td>
+                            <input type="checkbox" name="SelectedSchedules" value="@($"{day}-{slot.SlotId}")" @(isChecked ? "checked" : "") />
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Lưu</button>
+</form>
