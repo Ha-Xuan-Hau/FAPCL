@@ -9,7 +9,6 @@ namespace FAPCL.Model
         {
             Bookings = new HashSet<Booking>();
             ClassSchedules = new HashSet<ClassSchedule>();
-            Classes = new HashSet<Class>();
             ExamSchedules = new HashSet<ExamSchedule>();
             Exams = new HashSet<Exam>();
             Timetables = new HashSet<Timetable>();
@@ -22,7 +21,6 @@ namespace FAPCL.Model
 
         public virtual ICollection<Booking> Bookings { get; set; }
         public virtual ICollection<ClassSchedule> ClassSchedules { get; set; }
-        public virtual ICollection<Class> Classes { get; set; }
         public virtual ICollection<ExamSchedule> ExamSchedules { get; set; }
         public virtual ICollection<Exam> Exams { get; set; }
         public virtual ICollection<Timetable> Timetables { get; set; }
