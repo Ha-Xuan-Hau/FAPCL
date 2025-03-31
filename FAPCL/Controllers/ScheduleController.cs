@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -21,6 +22,22 @@ namespace FAPCL.Controllers
         {
             _context = context;
         }
+        private string GetIdFromToken()
+        {
+            var authHeader = HttpContext.Request.Headers["Authorization"].ToString();
+
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            {
+                return string.Empty; 
+            }
+
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var studentId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            return studentId ?? string.Empty;
+        }
 
         [HttpGet]
         public async Task<ActionResult> GetTimetable(
@@ -29,8 +46,7 @@ namespace FAPCL.Controllers
             [FromQuery] string Year)
         {
 
-/*            var studentId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-*/            var studentId = "4957a638-49e5-4b5f-860b-f70a7d33fb7f"; 
+          var studentId = GetIdFromToken(); 
             if (string.IsNullOrEmpty(studentId))
             {
                 return Unauthorized("Student is not logged in.");
@@ -129,8 +145,7 @@ namespace FAPCL.Controllers
     [FromQuery] string toDateMonth,
     [FromQuery] string Year)
         {
-/*            var teacherId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-*/            var teacherId = "GV0001"; 
+           var teacherId = GetIdFromToken(); 
             if (string.IsNullOrEmpty(teacherId))
             {
                 return Unauthorized("Teacher is not logged in.");
