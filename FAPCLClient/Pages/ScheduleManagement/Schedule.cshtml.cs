@@ -52,7 +52,18 @@ namespace FAPCLClient.Pages.ScheduleManagement
             FromDate = fromDate.ToString("dd-MM");
             ToDate = toDate.ToString("dd-MM");
 
-            var response = await _httpClient.GetAsync($"/api/schedule?fromDateMonth={FromDate}&toDateMonth={ToDate}&Year={year}");
+            string token = HttpContext.Session.GetString("Token"); 
+
+            if (string.IsNullOrEmpty(token))
+            {
+                Schedules = new List<ScheduleEntryDto>();
+                return;
+            }
+            var request = new HttpRequestMessage(HttpMethod.Get,
+                $"/api/schedule?fromDateMonth={FromDate}&toDateMonth={ToDate}&Year={year}");
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _httpClient.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -63,6 +74,7 @@ namespace FAPCLClient.Pages.ScheduleManagement
                 Schedules = new List<ScheduleEntryDto>();
             }
         }
+
 
         private int GetCurrentWeek(DateTime date, int year)
         {

@@ -1,0 +1,66 @@
+﻿@page
+@model FAPCLClient.Pages.StudentEnroll.IndexModel
+@{
+    ViewData["Title"] = "Đăng ký lớp học";
+}
+
+<h2>Đăng ký lớp học</h2>
+
+<h3>Lớp đã đăng ký</h3>
+@if (Model.RegisteredClasses.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Lớp học</th>
+                <th>Thời gian bắt đầu</th>
+                <th>Thời gian kết thúc</th>
+                <th>Phòng học</th>
+                <th>Hủy đăng ký</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var classItem in Model.RegisteredClasses)
+            {
+                <tr>
+                    <td>@classItem.ClassName</td>
+                    <td>@classItem.StartDate.ToString("dd/MM/yyyy")</td>
+                    <td>@classItem.EndDate.ToString("dd/MM/yyyy")</td>
+                    <td>@classItem.RoomName</td>
+                    <td>
+                        <form method="post" asp-page-handler="Cancel" asp-route-classId="@classItem.ClassId">
+                            <button type="submit" class="btn btn-danger">Hủy đăng ký</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Chưa đăng ký lớp học nào.</p>
+}
+
+<h3>Lớp có thể đăng ký</h3>
+
+<form method="post" asp-page-handler="Register">
+    <div class="form-group">
+        <label for="ClassId">Chọn lớp học:</label>
+        <select class="form-control" id="ClassId" name="ClassId">
+            @foreach (var classItem in Model.Classes)
+            {
+                <option value="@classItem.ClassId">@classItem.ClassName - Số lượng còn lại: @classItem.AvailableSlots</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Đăng ký</button>
+</form>
+
+@if (Model.Message != null)
+{
+    <div class="alert alert-info mt-3">
+        @Model.Message
+    </div>
+}
