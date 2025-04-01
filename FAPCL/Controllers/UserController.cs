@@ -227,7 +227,7 @@ namespace FAPCL.Controllers
             if (updateResult.Succeeded)
             {
                 // Nếu xác nhận thành công, redirect người dùng đến dự án FAPCLClient
-                var clientUrl = "https://localhost:7005";  
+                var clientUrl = "http://localhost:5163";  
                 var callbackUrl = $"{clientUrl}/ConfirmEmail?userId={user.Id}&code={decodedCode}";
                 return Redirect(callbackUrl); 
             }

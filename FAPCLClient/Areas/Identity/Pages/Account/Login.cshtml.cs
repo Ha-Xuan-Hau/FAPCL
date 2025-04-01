@@ -66,7 +66,7 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
             var json = JsonSerializer.Serialize(loginData);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync("https://localhost:7007/api/User/login", content);
+            var response = await _httpClient.PostAsync("http://localhost:5043/api/User/login", content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -116,9 +116,22 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return Page();
+                // Đọc thông báo lỗi từ API
+                var responseData = await response.Content.ReadAsStringAsync();
+                var errorResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseData);
+
+                if (errorResponse != null && errorResponse.ContainsKey("message"))
+                {
+                    string message = errorResponse["message"];
+                    Console.WriteLine($"Error: {message}");
+                    ModelState.AddModelError(string.Empty, message); // Thêm vào ModelState nếu cần
+                }
+                else
+                {
+                    ModelState.AddModelError(string.Empty, "An unknown error occurred.");
+                }
             }
+            return Page();
         }
 
         public class TokenResponse

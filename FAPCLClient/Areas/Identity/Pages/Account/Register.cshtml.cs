@@ -89,12 +89,12 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             // Gửi yêu cầu đăng ký đến API
-            var response = await _httpClient.PostAsync("https://localhost:7007/api/User/register", content);
+            var response = await _httpClient.PostAsync("http://localhost:5043/api/User/register", content);
 
             if (response.IsSuccessStatusCode)
             {
                 // Lưu thông báo thành công vào TempData để hiển thị trên giao diện
-                TempData["SuccessMessage"] = "User registered successfully!";
+                TempData["SuccessMessage"] = "User registered successfully, please check your email to confirm your account.";
                 return RedirectToPage();  // Tái tải trang để hiển thị thông báo
             }
             else

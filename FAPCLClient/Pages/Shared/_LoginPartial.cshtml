@@ -8,7 +8,7 @@
             <span class="nav-link text-dark">Hello, @HttpContextAccessor.HttpContext.Session.GetString("UserName")!</span>
         </li>
         <li class="nav-item">
-            <button id="logout" class="nav-link btn btn-link text-dark border-0">Logout</button>
+            <a id="logout" class="nav-link btn btn-link text-dark border-0" href="/Logout">Logout</a>
         </li>
     }
     else
