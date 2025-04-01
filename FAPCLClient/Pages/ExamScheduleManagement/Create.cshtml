@@ -4,20 +4,6 @@
     ViewData["Title"] = "Schedule New Exam";
 }
 
-@if (!string.IsNullOrEmpty(Model.ErrorMessage))
-{
-    <div class="alert alert-danger mt-4">
-        <h4 class="alert-heading">Access Denied</h4>
-        <p>@Model.ErrorMessage</p>
-    </div>
-    <div class="text-center mt-4">
-        <a href="javascript:history.back()" class="btn btn-primary">
-            <i class="bi bi-arrow-left"></i> Go Back
-        </a>
-    </div>
-}
-else
-{
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Create Exam Schedule</h2>
@@ -145,11 +131,10 @@ else
         </div>
     </form>
 </div>
-}
+
 @section Scripts {
     <script src="~/js/exam-scheduling.js"></script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
-
