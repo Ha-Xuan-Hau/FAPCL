@@ -29,7 +29,7 @@ namespace FAPCLClient.Pages.ScheduleManagement
         public string ToDate { get; set; }
         public List<ScheduleEntryDto> Schedules { get; set; }
 
-        public async Task OnGet()
+        public async Task<IActionResult> OnGet()
         {
             DateTime today = DateTime.Now;
             int currentYear = today.Year;
@@ -52,12 +52,10 @@ namespace FAPCLClient.Pages.ScheduleManagement
             FromDate = fromDate.ToString("dd-MM");
             ToDate = toDate.ToString("dd-MM");
 
-            string token = HttpContext.Session.GetString("Token"); 
-
+            string token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrEmpty(token))
             {
-                Schedules = new List<ScheduleEntryDto>();
-                return;
+                return Redirect("~/Identity/Account/Login");
             }
             var request = new HttpRequestMessage(HttpMethod.Get,
                 $"/api/schedule?fromDateMonth={FromDate}&toDateMonth={ToDate}&Year={year}");
@@ -73,6 +71,7 @@ namespace FAPCLClient.Pages.ScheduleManagement
             {
                 Schedules = new List<ScheduleEntryDto>();
             }
+            return Page();
         }
 
 

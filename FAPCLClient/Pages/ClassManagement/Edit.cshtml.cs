@@ -25,10 +25,9 @@ public class EditModel : PageModel
 
     [BindProperty] public string? StartDate { get; set; }
     [BindProperty] public string? EndDate { get; set; }
-
     public async Task<IActionResult> OnGetAsync(int id)
     {
-        ClassDto = await _httpClient.GetFromJsonAsync<ClassDto>($"{ApiBaseUrl}classes/{id}/dto") ?? new();
+        ClassDto = await _httpClient.GetFromJsonAsync<ClassDto>($"{ApiBaseUrl}class-management/classes/{id}/dto") ?? new();
         StartDate = ClassDto.StartDate.ToString("yyyy-MM-dd");
         EndDate = ClassDto.EndDate.ToString("yyyy-MM-dd");
 
@@ -44,6 +43,7 @@ public class EditModel : PageModel
 
         return Page();
     }
+
 
     public async Task<IActionResult> OnPostAsync()
     {
@@ -68,8 +68,11 @@ public class EditModel : PageModel
 
         ClassDto.StartDate = startDate;
         ClassDto.EndDate = endDate;
+        ClassDto.RoomName = "";
+        ClassDto.CourseName = "";
+        ClassDto.TeacherName = "";
 
-        var response = await _httpClient.PutAsJsonAsync($"{ApiBaseUrl}classes/{ClassDto.ClassId}", ClassDto);
+        var response = await _httpClient.PutAsJsonAsync($"{ApiBaseUrl}class-management/classes/{ClassDto.ClassId}", ClassDto);
         var responseContent = await response.Content.ReadAsStringAsync();
 
         if (response.IsSuccessStatusCode)

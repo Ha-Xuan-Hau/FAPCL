@@ -23,7 +23,7 @@ namespace FAPCLClient.Pages.ScheduleManagement
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var response = await _httpClient.GetAsync($"http://localhost:5043/api/classes/{ClassId}");
+            var response = await _httpClient.GetAsync($"http://localhost:5043/api/class-management/classes/{ClassId}");
             if (!response.IsSuccessStatusCode)
             {
                 return NotFound();

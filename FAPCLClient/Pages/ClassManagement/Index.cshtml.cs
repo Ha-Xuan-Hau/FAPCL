@@ -38,7 +38,7 @@ namespace FAPCLClient.Pages.ClassManagement
 
             Rooms = await _httpClient.GetFromJsonAsync<List<RoomDto>>(ApiBaseUrl + "Room/admin/room") ?? new();
 
-            var query = $"classes?className={className}&courseId={courseId}";
+            var query = $"class-management/classes?className={className}&courseId={courseId}";
             Classes = await _httpClient.GetFromJsonAsync<List<ClassDto>>(ApiBaseUrl + query) ?? new();
         }
 
@@ -81,7 +81,7 @@ namespace FAPCLClient.Pages.ClassManagement
                 RoomName = ""
             };
 
-            var response = await _httpClient.PostAsJsonAsync(ApiBaseUrl + "classes", newClass);
+            var response = await _httpClient.PostAsJsonAsync(ApiBaseUrl + "class-management/classes", newClass);
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (response.IsSuccessStatusCode)
@@ -95,7 +95,5 @@ namespace FAPCLClient.Pages.ClassManagement
                 return Page();
             }
         }
-
-
     }
 }
