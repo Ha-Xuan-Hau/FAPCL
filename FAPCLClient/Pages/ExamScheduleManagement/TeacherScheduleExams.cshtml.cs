@@ -16,7 +16,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private readonly JsonSerializerOptions _jsonOptions;
 
         public string? Token { get; set; }
-        public bool IsAdmin { get; set; }
+        public bool IsTeacher { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public string TeacherId { get; set; }
@@ -44,8 +44,10 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         public async Task<IActionResult> OnGetAsync()
         {
             Token = HttpContext.Session.GetString("Token");
-            // Extract role from JWT token
-            bool isAdmin = false;
+            // Extract claims from JWT token
+            bool isTeacher = false;
+            string userId = null;
+
             if (!string.IsNullOrEmpty(Token))
             {
                 var handler = new JwtSecurityTokenHandler();
@@ -59,41 +61,62 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                         c.Type == "role");
 
                     Console.WriteLine($"Role from JWT token: '{roleClaim?.Value}'");
-                    isAdmin = roleClaim?.Value == "Teacher";
+                    isTeacher = roleClaim?.Value == "Teacher";
+
+                    // Extract user ID from the token
+                    var userIdClaim = jsonToken.Claims.FirstOrDefault(c =>
+                        c.Type == "nameid" ||
+                        c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier" ||
+                        c.Type == "sub");
+
+                    if (userIdClaim != null)
+                    {
+                        userId = userIdClaim.Value;
+                        Console.WriteLine($"User ID from JWT token: '{userId}'");
+
+                        // Optionally store in session for easier access later
+                        HttpContext.Session.SetString("UserId", userId);
+                    }
                 }
             }
 
-            IsAdmin = isAdmin;
-            // Check if user is a student
-            if (!IsAdmin)
+            TeacherId = userId.Trim();
+            IsTeacher = isTeacher;
+
+            if (!IsTeacher)
             {
                 ErrorMessage = "Only teacher can access this page.";
                 return Page();
             }
-
-            var userId = HttpContext.Session.GetString("UserId");
-
-            TeacherId = userId.Trim();
             try
             {
                 var client = CreateHttpClient();
-                // Call API endpoint to get exam schedule for the student
                 var response = await client.GetAsync($"ExamSchedule/teacher/{TeacherId}");
-                //06c924c7-80ab-4b70-9842-9464dbcffb37
                 if (!response.IsSuccessStatusCode)
                 {
                     ErrorMessage = $"Failed to load exam schedules: {response.ReasonPhrase}";
                     return Page();
                 }
-
-                if (ExamSchedules == null)
+                var content = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Raw JSON response: {content}");
+                try
                 {
+                    // Make sure your JSON options include case insensitivity
+                    ExamSchedules = JsonSerializer.Deserialize<List<StudentExamScheduleDTO>>(content, _jsonOptions);
+
+                    // Check after deserialization
+                    if (ExamSchedules == null || !ExamSchedules.Any())
+                    {
+                        ErrorMessage = "No exam schedules found.";
+                        return Page();
+                    }
+                }
+                catch (JsonException jsonEx)
+                {
+                    Console.WriteLine($"JSON deserialization error: {jsonEx.Message}");
                     ErrorMessage = "Failed to deserialize exam schedules. Please try again.";
                     return Page();
                 }
-
-                var content = await response.Content.ReadAsStringAsync();
-                ExamSchedules = JsonSerializer.Deserialize<List<StudentExamScheduleDTO>>(content, _jsonOptions);
 
                 return Page();
             }
@@ -103,6 +126,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                 ErrorMessage = "An error occurred while loading exam schedules.";
                 return Page();
             }
+
         }
 
 
