@@ -10,7 +10,7 @@ namespace FAPCLClient.Pages.ClassroomManagement
     {
         private readonly IHubContext<SignalRServer> _hubContext;
         private readonly HttpClient _httpClient;
-        private const string ApiBaseUrl = "http://localhost:5043/api/Room";
+        private const string ApiBaseUrl = "http://localhost:5043/api";
 
         public IndexModel(IHubContext<SignalRServer> hubContext, HttpClient httpClient)
         {
@@ -48,9 +48,18 @@ namespace FAPCLClient.Pages.ClassroomManagement
             };
             
             string queryString = string.Join("&", queryParams.Where(q => q.Value != null).Select(q => $"{q.Key}={q.Value}"));
-            string url = $"{ApiBaseUrl}/rooms?{queryString}";
+            string url = $"{ApiBaseUrl}/Room/rooms?{queryString}";
             
             var response = await _httpClient.GetFromJsonAsync<RoomResponse>(url);
+            
+            string urlRoomTypes = $"{ApiBaseUrl}/RoomType";
+            
+            var responseRoomTypes = await _httpClient.GetFromJsonAsync<List<RoomType>>(urlRoomTypes);
+            if (responseRoomTypes != null)
+            {
+                RoomTypes = responseRoomTypes;
+            }
+            
             if (response != null)
             {
                 Room = response.Rooms;
@@ -63,7 +72,7 @@ namespace FAPCLClient.Pages.ClassroomManagement
 
         public async Task<IActionResult> OnPost(int roomId)
         {
-            var response = await _httpClient.PutAsync($"{ApiBaseUrl}/admin/room/{roomId}", null);
+            var response = await _httpClient.PutAsync($"{ApiBaseUrl}/Room/admin/room/{roomId}", null);
             if (!response.IsSuccessStatusCode)
             {
                 return NotFound();

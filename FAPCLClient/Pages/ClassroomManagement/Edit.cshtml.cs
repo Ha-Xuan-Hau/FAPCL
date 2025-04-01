@@ -13,7 +13,7 @@ namespace FAPCLClient.Pages.ClassroomManagement
     {
         private readonly IHubContext<SignalRServer> _hubContext;
         private readonly HttpClient _httpClient;
-        private const string ApiBaseUrl = "http://localhost:5043/api/room";
+        private const string ApiBaseUrl = "http://localhost:5043/api";
 
         public EditModel(IHubContext<SignalRServer> hubContext, IHttpClientFactory httpClientFactory)
         {
@@ -28,19 +28,21 @@ namespace FAPCLClient.Pages.ClassroomManagement
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var response = await _httpClient.GetAsync($"{ApiBaseUrl}/admin/room/{id}");
+            var response = await _httpClient.GetAsync($"{ApiBaseUrl}/Room/admin/room/{id}");
             if (!response.IsSuccessStatusCode)
             {
                 return NotFound();
             }
             Room = await response.Content.ReadFromJsonAsync<Room>();
-
-            var roomTypesResponse = await _httpClient.GetAsync($"{ApiBaseUrl}/roomtypes");
-            if (roomTypesResponse.IsSuccessStatusCode)
+            
+            string urlRoomTypes = $"{ApiBaseUrl}/RoomType";
+            
+            var responseRoomTypes = await _httpClient.GetFromJsonAsync<List<RoomType>>(urlRoomTypes);
+            if (responseRoomTypes != null)
             {
-                var roomTypes = await roomTypesResponse.Content.ReadFromJsonAsync<List<RoomType>>();
-                RoomTypeOptions = new SelectList(roomTypes, "RoomTypeId", "RoomType1");
+                RoomTypeOptions = new SelectList(responseRoomTypes, "RoomTypeId", "RoomType1");
             }
+            
             return Page();
         }
 

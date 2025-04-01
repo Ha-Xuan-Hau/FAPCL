@@ -82,6 +82,11 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
                     ModelState.AddModelError(string.Empty, "User not found.");
                     return Page();
                 }
+                
+                var userRoles = await _context.UserRoles
+                    .Where(ur => ur.UserId == user.Id)
+                    .Select(ur => _context.Roles.FirstOrDefault(r => r.Id == ur.RoleId).Name)
+                    .ToListAsync();
 
                 // Kiểm tra nếu token đã tồn tại
                 var existingToken = await _context.AspNetUserTokens
@@ -106,7 +111,7 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
                 // Lưu thông tin người dùng vào Session
                 HttpContext.Session.SetString("UserName", user.UserName);
                 HttpContext.Session.SetString("UserEmail", user.Email);
-                HttpContext.Session.SetString("Role", user.Roles.ToString());
+                HttpContext.Session.SetString("Role", string.Join(",", userRoles));
                 HttpContext.Session.SetString("Token", tokenResponse.token);
 
                 await _context.SaveChangesAsync();

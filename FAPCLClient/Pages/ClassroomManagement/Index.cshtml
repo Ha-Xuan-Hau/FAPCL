@@ -150,12 +150,44 @@
                                 <a class="btn btn-outline-primary btn-sm" asp-page="./Edit" asp-route-id="@item.RoomId">Edit Classroom</a>
                                 @if (!string.IsNullOrEmpty(item.Status) && item.Status != "Booked" && item.Status != "InUse")
                                 {
-                                    <form method="post" asp-page-handler="ToggleVisibility" asp-route-roomId="@item.RoomId" class="mb-0">
-                                        <button type="submit" class="btn btn-outline-info btn-sm">
-                                            @(item.IsAction == true ? "Hide" : "Show") Classroom
+                                    @if (!string.IsNullOrEmpty(item.Status) && item.Status != "Booked" && item.Status != "InUse")
+                                    {
+                                        <button type="button" class="btn btn-outline-info btn-sm"
+                                                id="toggle-btn-@item.RoomId"
+                                                onclick="toggleVisibility('@item.RoomId', @((bool)item.IsAction ? "false" : "true"))">
+                                            @((bool)item.IsAction ? "Hide" : "Show") Classroom
                                         </button>
-                                    </form>
+                                    }
                                 }
+                                
+                                <script>
+                                    function toggleVisibility(roomId, isAction) {
+                                        // Bước 1: Gọi API cập nhật trạng thái
+                                        fetch(`http://localhost:5043/api/Room/admin/room/${roomId}/${isAction}`, {
+                                            method: 'GET'
+                                        })
+                                            .then(response => response.json())
+                                            .then(success => {
+                                                if (success) {
+                                                    // Bước 2: Nếu cập nhật thành công, gọi API lấy dữ liệu mới
+                                                    return fetch(`http://localhost:5043/api/Room/admin/room/${roomId}`)
+                                                        .then(response => response.json());
+                                                } else {
+                                                    throw new Error("Cập nhật thất bại");
+                                                }
+                                            })
+                                            .then(room => {
+                                                // Bước 3: Cập nhật lại giao diện
+                                                let button = document.getElementById(`toggle-btn-${room.roomId}`);
+                                                button.textContent = room.isAction ? "Hide Classroom" : "Show Classroom";
+                                                button.setAttribute("onclick", `toggleVisibility('${room.roomId}', '${!room.isAction}')`);
+                                            })
+                                            .catch(error => {
+                                                console.error('Error:', error);
+                                                alert('Lỗi cập nhật trạng thái phòng');
+                                            });
+                                    }
+                                </script>
                             </div>
                         </div>
                     </div>
