@@ -52,12 +52,11 @@ namespace FAPCLClient.Pages.ScheduleManagement
             FromDate = fromDate.ToString("dd-MM");
             ToDate = toDate.ToString("dd-MM");
 
-            string token = HttpContext.Session.GetString("Token");                                                               
+            string token = HttpContext.Session.GetString("Token");
 
             if (string.IsNullOrEmpty(token))
             {
-                Schedule = new List<TeacherScheduleDto>();
-                return Page();
+                return Redirect("~/Identity/Account/Login");
             }
             var request = new HttpRequestMessage(HttpMethod.Get,
                 $"http://localhost:5043/api/schedule/teacher?fromDateMonth={FromDate}&toDateMonth={ToDate}&Year={year}");

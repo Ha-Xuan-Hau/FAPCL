@@ -109,8 +109,12 @@ namespace FAPCLClient.Pages.ClassManagement
 
             if (!response.IsSuccessStatusCode)
             {
-                var errorMessage = await response.Content.ReadAsStringAsync();
-                TempData["Error"] = $"Lỗi API: {response.StatusCode} - {errorMessage}";
+                var errorContent = await response.Content.ReadAsStringAsync();
+
+                using var jsonDoc = JsonDocument.Parse(errorContent);
+                string errorMessage = jsonDoc.RootElement.GetProperty("message").GetString();
+
+                TempData["Error"] = errorMessage;
                 return RedirectToPage(new { ClassId });
             }
 

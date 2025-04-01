@@ -80,7 +80,7 @@ namespace FAPCL.Controllers
             _context.ClassSchedules.RemoveRange(schedulesToRemove);
             _context.ClassSchedules.AddRange(schedulesToAdd);
             await _context.SaveChangesAsync();
-
+            await UpdateStudentTimetable(classId);
             return Ok(new { Message = "Cập nhật lịch dạy thành công!" });
         }
 
@@ -106,26 +106,62 @@ namespace FAPCL.Controllers
                     cs.DayOfWeek,
                     cs.SlotId
                 })
-                .ToListAsync(); 
+                .ToListAsync();
 
             var conflicts = newSchedules
                 .Where(ns => existingSchedules.Any(es =>
                     es.DayOfWeek == ns.DayOfWeek &&
                     es.SlotId == ns.SlotId &&
-                    es.ClassId != ns.ClassId &&
-                    teacherClasses.Any(tc =>
-                        tc.ClassId == ns.ClassId &&
-                        tc.StartDate < teacherClasses.First(c => c.ClassId == es.ClassId).EndDate &&
-                        tc.EndDate > teacherClasses.First(c => c.ClassId == es.ClassId).StartDate)))
+                    es.ClassId != ns.ClassId)) 
                 .Select(conflict => new ScheduleConflictDto
                 {
-                    ClassId = conflict.ClassId,
                     DayOfWeek = conflict.DayOfWeek,
-                    SlotId = conflict.SlotId
+                    SlotId = conflict.SlotId,
+                    ClassId = existingSchedules
+                        .Where(es => es.DayOfWeek == conflict.DayOfWeek && es.SlotId == conflict.SlotId && es.ClassId != conflict.ClassId)
+                        .Select(es => es.ClassId)
+                        .FirstOrDefault()  
                 })
                 .ToList();
 
             return conflicts;
         }
+        private async Task UpdateStudentTimetable(int classId)
+        {
+            var studentsInClass = await _context.StudentClasses
+                .Where(sc => sc.ClassId == classId && sc.Status == "Enrolled")
+                .Select(sc => sc.StudentId)
+                .ToListAsync();
+
+            var oldTimetable = _context.Timetables
+                .Where(t => t.ClassId == classId && studentsInClass.Contains(t.StudentId));
+
+            _context.Timetables.RemoveRange(oldTimetable);
+            await _context.SaveChangesAsync();
+
+            var updatedSchedules = await _context.ClassSchedules
+                .Where(cs => cs.ClassId == classId)
+                .ToListAsync();
+
+            var newTimetables = new List<Timetable>();
+
+            foreach (var studentId in studentsInClass)
+            {
+                foreach (var schedule in updatedSchedules)
+                {
+                    newTimetables.Add(new Timetable
+                    {
+                        StudentId = studentId,
+                        ClassId = classId,
+                        SlotId = schedule.SlotId,
+                        DayOfWeek = schedule.DayOfWeek
+                    });
+                }
+            }
+
+            _context.Timetables.AddRange(newTimetables);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using NuGet.Common;
 
 namespace FAPCLClient.Pages.StudentEnroll
 {
@@ -19,14 +20,12 @@ namespace FAPCLClient.Pages.StudentEnroll
             _httpClient = httpClient;
         }
 
-        // Phương thức lấy studentId từ token
         private string GetStudentIdFromToken()
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrEmpty(token))
             {
                 Message = "Token không hợp lệ!";
-                RedirectToPage("/Account/Login");
                 return string.Empty;
             }
 
@@ -47,26 +46,21 @@ namespace FAPCLClient.Pages.StudentEnroll
         public async Task<IActionResult> OnGetAsync()
         {
             var studentId = GetStudentIdFromToken();
-            if (string.IsNullOrEmpty(studentId)) return RedirectToPage("/Account/Login");
+            if (string.IsNullOrEmpty(studentId))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
 
             var availableClassesResponse = await _httpClient.GetFromJsonAsync<List<ClassEnrollmentDto>>("http://localhost:5043/api/enroll/available-classes");
-
-            if (availableClassesResponse != null)
-            {
-                Classes = availableClassesResponse;
-            }
+            Classes = availableClassesResponse ?? new List<ClassEnrollmentDto>();
 
             var myClassesResponse = await _httpClient.GetFromJsonAsync<List<ClassEnrollmentDto>>($"http://localhost:5043/api/enroll/my-classes/{studentId}");
-
-            if (myClassesResponse != null)
-            {
-                RegisteredClasses = myClassesResponse;
-            }
+            RegisteredClasses = myClassesResponse ?? new List<ClassEnrollmentDto>();
 
             return Page();
         }
 
-        // Phương thức đăng ký lớp học
+
         public async Task<IActionResult> OnPostRegisterAsync(int classId)
         {
             var studentId = GetStudentIdFromToken();
@@ -92,7 +86,6 @@ namespace FAPCLClient.Pages.StudentEnroll
             return await OnGetAsync();
         }
 
-        // Phương thức hủy đăng ký lớp học
         public async Task<IActionResult> OnPostCancelAsync(int classId)
         {
             var studentId = GetStudentIdFromToken();

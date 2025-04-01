@@ -6,8 +6,8 @@
 
 <h2>Đăng ký lớp học</h2>
 
-<h3>Lớp đã đăng ký</h3>
-@if (Model.RegisteredClasses.Any())
+<h3>Lớp đang học</h3>
+@if (Model.RegisteredClasses.Any(c => c.EndDate >= DateTime.Now))
 {
     <table class="table">
         <thead>
@@ -16,11 +16,12 @@
                 <th>Thời gian bắt đầu</th>
                 <th>Thời gian kết thúc</th>
                 <th>Phòng học</th>
+                <th>Trạng thái</th>
                 <th>Hủy đăng ký</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var classItem in Model.RegisteredClasses)
+            @foreach (var classItem in Model.RegisteredClasses.Where(c => c.EndDate >= DateTime.Now))
             {
                 <tr>
                     <td>@classItem.ClassName</td>
@@ -28,9 +29,24 @@
                     <td>@classItem.EndDate.ToString("dd/MM/yyyy")</td>
                     <td>@classItem.RoomName</td>
                     <td>
-                        <form method="post" asp-page-handler="Cancel" asp-route-classId="@classItem.ClassId">
-                            <button type="submit" class="btn btn-danger">Hủy đăng ký</button>
-                        </form>
+                        <span class="badge
+        @(classItem.Status == "Pending" ? "bg-warning text-dark" :
+          classItem.Status == "Enrolled" ? "bg-success" :
+          classItem.Status == "Canceled" || classItem.Status == "Dropped" ? "bg-danger" : "bg-secondary")">
+                            @classItem.Status
+                        </span>
+                    </td>
+                    <td>
+                        @if (classItem.Status == "Pending" || (classItem.Status == "Enrolled" && classItem.StartDate > DateTime.Now.AddDays(1)))
+                        {
+                            <form method="post" asp-page-handler="Cancel" asp-route-classId="@classItem.ClassId">
+                                <button type="submit" class="btn btn-danger">Hủy đăng ký</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không thể hủy</span>
+                        }
                     </td>
                 </tr>
             }
@@ -39,24 +55,62 @@
 }
 else
 {
-    <p>Chưa đăng ký lớp học nào.</p>
+    <p>Không có lớp nào đang học.</p>
+}
+
+<h3>Lịch sử lớp học</h3>
+@if (Model.RegisteredClasses.Any(c => c.EndDate < DateTime.Now))
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Lớp học</th>
+                <th>Thời gian bắt đầu</th>
+                <th>Thời gian kết thúc</th>
+                <th>Phòng học</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var classItem in Model.RegisteredClasses.Where(c => c.EndDate < DateTime.Now))
+            {
+                <tr>
+                    <td>@classItem.ClassName</td>
+                    <td>@classItem.StartDate.ToString("dd/MM/yyyy")</td>
+                    <td>@classItem.EndDate.ToString("dd/MM/yyyy")</td>
+                    <td>@classItem.RoomName</td>
+                    <td><span class="badge bg-secondary">Hoàn thành</span></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Chưa có lớp học nào đã hoàn thành.</p>
 }
 
 <h3>Lớp có thể đăng ký</h3>
-
-<form method="post" asp-page-handler="Register">
-    <div class="form-group">
-        <label for="ClassId">Chọn lớp học:</label>
-        <select class="form-control" id="ClassId" name="ClassId">
-            @foreach (var classItem in Model.Classes)
-            {
-                <option value="@classItem.ClassId">@classItem.ClassName - Số lượng còn lại: @classItem.AvailableSlots</option>
-            }
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Đăng ký</button>
-</form>
+@if (Model.Classes.Any())
+{
+    <form method="post" asp-page-handler="Register">
+        <div class="form-group">
+            <label for="ClassId">Chọn lớp học:</label>
+            <select class="form-control" id="ClassId" name="ClassId">
+                @foreach (var classItem in Model.Classes)
+                {
+                    var availableSlots = classItem.Capacity - classItem.RegisteredCount;
+                    <option value="@classItem.ClassId">@classItem.ClassName - Số lượng còn lại: @availableSlots</option>
+                }
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Đăng ký</button>
+    </form>
+}
+else
+{
+    <p>Hiện tại không có lớp nào có thể đăng ký.</p>
+}
 
 @if (Model.Message != null)
 {

@@ -15,6 +15,7 @@ namespace FAPCL.DTO
         public int Capacity { get; set; }
         public int RegisteredCount { get; set; }
 
+        public string Status { get; set; }
         public int AvailableSlots => Capacity - RegisteredCount;
     }
 }

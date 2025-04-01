@@ -1,0 +1,76 @@
+﻿@page
+@model FAPCLClient.Pages.ClassManagement.StudentsModel
+
+@{
+    ViewData["Title"] = "Quản lý sinh viên";
+}
+
+<h2>Danh sách sinh viên trong lớp</h2>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<form method="post" asp-page-handler="ChangeMultipleStatus">
+    <input type="hidden" name="ClassId" value="@Model.ClassId" />
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" /></th>
+                <th>Họ và tên</th>
+                <th>Email</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var student in Model.Students)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" name="selectedStudents" value="@student.StudentId" />
+                    </td>
+                    <td>@student.FullName</td>
+                    <td>@student.Email</td>
+                    <td>@student.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div>
+        <label for="newStatus">Chọn trạng thái mới:</label>
+        <select name="newStatus" class="form-control" id="newStatus">
+            <option value="Pending">Pending</option>
+            <option value="Enrolled">Enrolled</option>
+            <option value="Dropped">Dropped</option>
+            <option value="Completed">Completed</option>
+            <option value="Canceled">Canceled</option>
+        </select>
+    </div>
+
+    <div>
+        <button type="submit" class="btn btn-primary">Cập nhật trạng thái</button>
+        <a href="javascript:history.back()" class="btn btn-secondary">Quay lại</a>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function toggleSelectAll(checkbox) {
+            var checkboxes = document.querySelectorAll('input[name="selectedStudents"]');
+            checkboxes.forEach(function (item) {
+                item.checked = checkbox.checked;
+            });
+        }
+    </script>
+}
