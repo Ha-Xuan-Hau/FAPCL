@@ -60,30 +60,11 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
             try
             {
                 Token = HttpContext.Session.GetString("Token");
-                // Extract role from JWT token
-                bool isAdmin = false;
-                if (!string.IsNullOrEmpty(Token))
-                {
-                    var handler = new JwtSecurityTokenHandler();
-                    var jsonToken = handler.ReadToken(Token) as JwtSecurityToken;
-
-                    if (jsonToken != null)
-                    {
-                        // Look for role claims
-                        var roleClaim = jsonToken.Claims.FirstOrDefault(c =>
-                            c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" ||
-                            c.Type == "role");
-
-                        Console.WriteLine($"Role from JWT token: '{roleClaim?.Value}'");
-                        isAdmin = roleClaim?.Value == "Admin";
-                    }
-                }
-
-                IsAdmin = isAdmin;
+                IsAdmin = IsUserAdmin();
 
                 if (!IsAdmin)
                 {
-                    ErrorMessage = "You don't have permission to view the exam list.";
+                    ErrorMessage = "You don't have permission.";
                     return Page();
                 }
 
@@ -118,30 +99,11 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         public async Task<IActionResult> OnPostAsync()
         {
             Token = HttpContext.Session.GetString("Token");
-            // Extract role from JWT token
-            bool isAdmin = false;
-            if (!string.IsNullOrEmpty(Token))
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jsonToken = handler.ReadToken(Token) as JwtSecurityToken;
-
-                if (jsonToken != null)
-                {
-                    // Look for role claims
-                    var roleClaim = jsonToken.Claims.FirstOrDefault(c =>
-                        c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" ||
-                        c.Type == "role");
-
-                    Console.WriteLine($"Role from JWT token: '{roleClaim?.Value}'");
-                    isAdmin = roleClaim?.Value == "Admin";
-                }
-            }
-            
-            IsAdmin = isAdmin;
+            IsAdmin = IsUserAdmin();
 
             if (!IsAdmin)
             {
-                ErrorMessage = "You don't have permission to view the exam list.";
+                ErrorMessage = "You don't have permission.";
                 return Page();
             }
 
@@ -284,5 +246,32 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         }
 
         #endregion
+
+        private bool IsUserAdmin()
+        {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+                if (jsonToken == null)
+                    return false;
+
+                var roleClaim = jsonToken.Claims.FirstOrDefault(c =>
+                    c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" ||
+                    c.Type == "role");
+
+                return roleClaim?.Value == "Admin";
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
     }
 }

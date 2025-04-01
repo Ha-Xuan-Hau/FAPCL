@@ -77,14 +77,14 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                 }
 
                 IsAdmin = isAdmin;
-    
+
 
                 if (!IsAdmin)
                 {
                     ErrorMessage = "You don't have permission to view the exam list.";
-                    Exams = new List<ExamListItem>(); // Empty list
                     return Page();
                 }
+
 
                 var exams = await GetAllExamsAsync();
                 if (exams != null)

@@ -6,6 +6,7 @@ using System.Text.Json;
 using FAPCLClient.Model;
 using FAPCLClient.Model.DTOs;
 using FAPCL.DTO.ExamSchedule;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace FAPCLClient.Pages.ExamScheduleManagement
 {
@@ -45,24 +46,58 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         {
             try
             {
+                // Get token from session
                 Token = HttpContext.Session.GetString("Token");
-                string role = HttpContext.Session.GetString("Role") ?? string.Empty;
-                string userId = HttpContext.Session.GetString("UserId") ?? string.Empty;
 
-                // Check if the user has either Admin or Teacher role
-                bool isAdmin = role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
-                bool isTeacher = role.Equals("Teacher", StringComparison.OrdinalIgnoreCase);
+                // Initialize role flags
+                bool isAdmin = false;
+                bool isTeacher = false;
+                bool hasAccess = false;
+                string userId = string.Empty;
 
-                // Check if the user has either role
-                bool hasAccess = isAdmin || isTeacher;
-
-                if (!hasAccess)
+                // Extract information from JWT token
+                if (!string.IsNullOrEmpty(Token))
                 {
-                    ErrorMessage = "You don't have permission to view the exam list.";
-                    return Page();
+                    var handler = new JwtSecurityTokenHandler();
+                    var jsonToken = handler.ReadToken(Token) as JwtSecurityToken;
+
+                    if (jsonToken != null)
+                    {
+                        // Look for role claims
+                        var roleClaim = jsonToken.Claims.FirstOrDefault(c =>
+                            c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" ||
+                            c.Type == "role");
+
+                        if (roleClaim != null)
+                        {
+                            string roleValue = roleClaim.Value;
+                            Console.WriteLine($"Role from JWT token: '{roleValue}'");
+
+                            // Check for specific roles
+                            isAdmin = roleValue.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+                            isTeacher = roleValue.Equals("Teacher", StringComparison.OrdinalIgnoreCase);
+                            hasAccess = isAdmin || isTeacher;
+                        }
+
+                        // Extract user ID from token
+                        var userIdClaim = jsonToken.Claims.FirstOrDefault(c =>
+                            c.Type == "nameid" ||
+                            c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier");
+
+                        if (userIdClaim != null)
+                        {
+                            userId = userIdClaim.Value;
+                            Console.WriteLine($"User ID from JWT token: '{userId}'");
+                        }
+                    }
                 }
 
-                _logger.LogInformation($"Retrieving exam schedule details for ID: {Id}");
+                // Now use the extracted values
+                if (!hasAccess)
+                {
+                    ErrorMessage = "You don't have permission to view this page.";
+                    return Page();
+                }
 
                 // Get the exam details from the API
                 var result = await GetScheduleDetailsAsync(Id);
