@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Ebay_Project_PRN.Helper;
 using FAPCL.Mapping;
+using FAPCL.Services.examSchedule;
 using AutoMapper;
 using FAPCL.Controllers;
 using FAPCL.Help;
@@ -97,6 +98,7 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISlotService, SlotService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
+builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
 
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 

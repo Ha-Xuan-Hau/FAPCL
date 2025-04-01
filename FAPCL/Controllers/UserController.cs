@@ -86,7 +86,41 @@ namespace FAPCL.Controllers
             
             return Ok(new { Message = "User registered successfully with role. A confirmation email has been sent." });
         }
-        
+
+        [HttpPost("register-multiple")]
+        public async Task<IActionResult> RegisterMultiple([FromBody] List<RegisterModel> models)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            foreach (var model in models)
+            {
+                var user = new AspNetUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email,
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    PhoneNumber = model.PhoneNumber,
+                    Address = model.Address,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (!result.Succeeded)
+                {
+                    return BadRequest(new { Email = model.Email, Errors = result.Errors });
+                }
+
+                var role = string.IsNullOrEmpty(model.Role) ? "Student" : model.Role;
+                await _userManager.AddToRoleAsync(user, role);
+            }
+
+            return Ok(new { Message = "All users registered successfully" });
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {

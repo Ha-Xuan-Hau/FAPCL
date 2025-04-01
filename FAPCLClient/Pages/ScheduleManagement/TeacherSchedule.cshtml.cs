@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Http;
@@ -52,16 +52,30 @@ namespace FAPCLClient.Pages.ScheduleManagement
             FromDate = fromDate.ToString("dd-MM");
             ToDate = toDate.ToString("dd-MM");
 
-            var response = await _httpClient.GetAsync(
+            string token = HttpContext.Session.GetString("Token");                                                               
+
+            if (string.IsNullOrEmpty(token))
+            {
+                Schedule = new List<TeacherScheduleDto>();
+                return Page();
+            }
+            var request = new HttpRequestMessage(HttpMethod.Get,
                 $"http://localhost:5043/api/schedule/teacher?fromDateMonth={FromDate}&toDateMonth={ToDate}&Year={year}");
+
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _httpClient.SendAsync(request);
+
             if (!response.IsSuccessStatusCode)
             {
-                Schedule = new List < TeacherScheduleDto>();
+                Schedule = new List<TeacherScheduleDto>();
+                return Page();
             }
 
             Schedule = await response.Content.ReadFromJsonAsync<List<TeacherScheduleDto>>();
             return Page();
         }
+
 
         private int GetCurrentWeek(DateTime date, int year)
         {
