@@ -29,6 +29,10 @@
       "PackagePath": "staticwebassets\\images\\classroom3.png"
     },
     {
+      "Id": "D:\\FAPCL\\FAPCLClient\\wwwroot\\js\\exam-scheduling.js",
+      "PackagePath": "staticwebassets\\js\\exam-scheduling.js"
+    },
+    {
       "Id": "D:\\FAPCL\\FAPCLClient\\wwwroot\\js\\site.js",
       "PackagePath": "staticwebassets\\js\\site.js"
     },

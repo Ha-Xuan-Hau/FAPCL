@@ -92,6 +92,18 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29uZmlybUVtYWlsLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/FAPCL/FAPCLClient/Pages/ExamScheduleManagement/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbVNjaGVkdWxlTWFuYWdlbWVudFxDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FAPCL/FAPCLClient/Pages/ExamScheduleManagement/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbVNjaGVkdWxlTWFuYWdlbWVudFxEZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FAPCL/FAPCLClient/Pages/ExamScheduleManagement/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbVNjaGVkdWxlTWFuYWdlbWVudFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/FAPCL/FAPCLClient/Pages/RoomTypeManagement/RoomTypeManagement.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUm9vbVR5cGVNYW5hZ2VtZW50XFJvb21UeXBlTWFuYWdlbWVudC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -126,4 +138,8 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/FAPCL/FAPCLClient/Pages/Shared/_ValidationScriptsPartial.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/FAPCL/FAPCLClient/Pages/StudentEnroll/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3R1ZGVudEVucm9sbFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 

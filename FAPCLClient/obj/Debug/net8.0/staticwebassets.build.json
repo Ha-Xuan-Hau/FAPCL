@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "L4EO3X+jeTAQKdBJiCEGINTjBUE7f2CC1c8eP7yNTrM=",
+  "Hash": "JzuZ/RbffQ36557/9RnPGOqidgau/LOjKmbbu51GbG0=",
   "Source": "FAPCLClient",
   "BasePath": "_content/FAPCLClient",
   "Mode": "Default",
@@ -1434,6 +1434,27 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\images\\classroom3.png"
+    },
+    {
+      "Identity": "D:\\FAPCL\\FAPCLClient\\wwwroot\\js\\exam-scheduling.js",
+      "SourceId": "FAPCLClient",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\FAPCL\\FAPCLClient\\wwwroot\\",
+      "BasePath": "_content/FAPCLClient",
+      "RelativePath": "js/exam-scheduling#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "rer4yanwkv",
+      "Integrity": "PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\js\\exam-scheduling.js"
     },
     {
       "Identity": "D:\\FAPCL\\FAPCLClient\\wwwroot\\js\\site.js",
@@ -5446,6 +5467,88 @@
         {
           "Name": "integrity",
           "Value": "sha256-CqkS1D3PTyqAgAvcCNv5JzcFE5YFjsn+RY+e/JPTOKE="
+        }
+      ]
+    },
+    {
+      "Route": "js/exam-scheduling.js",
+      "AssetFile": "D:\\FAPCL\\FAPCLClient\\wwwroot\\js\\exam-scheduling.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6558"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 01 Apr 2025 08:18:17 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs="
+        }
+      ]
+    },
+    {
+      "Route": "js/exam-scheduling.rer4yanwkv.js",
+      "AssetFile": "D:\\FAPCL\\FAPCLClient\\wwwroot\\js\\exam-scheduling.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6558"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 01 Apr 2025 08:18:17 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "rer4yanwkv"
+        },
+        {
+          "Name": "label",
+          "Value": "js/exam-scheduling.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs="
         }
       ]
     },

@@ -84,6 +84,18 @@
       <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-CqkS1D3PTyqAgAvcCNv5JzcFE5YFjsn\u002BRY\u002Be/JPTOKE="}]]]></EndpointProperties>
       <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=3600, must-revalidate"},{"Name":"Content-Length","Value":"450854"},{"Name":"Content-Type","Value":"image/png"},{"Name":"ETag","Value":"\u0022CqkS1D3PTyqAgAvcCNv5JzcFE5YFjsn\u002BRY\u002Be/JPTOKE=\u0022"},{"Name":"Last-Modified","Value":"Thu, 27 Mar 2025 08:02:17 GMT"}]]]></ResponseHeaders>
     </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/FAPCLClient/js/exam-scheduling.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\exam-scheduling.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-PWK4s6nSW0W2J\u002BAsGrM2RE\u002BBzME6yKlUCBsvo1PJtXs="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"6558"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022PWK4s6nSW0W2J\u002BAsGrM2RE\u002BBzME6yKlUCBsvo1PJtXs=\u0022"},{"Name":"Last-Modified","Value":"Tue, 01 Apr 2025 08:18:17 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="_content/FAPCLClient/js/exam-scheduling.rer4yanwkv.js">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\exam-scheduling.js'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"rer4yanwkv"},{"Name":"integrity","Value":"sha256-PWK4s6nSW0W2J\u002BAsGrM2RE\u002BBzME6yKlUCBsvo1PJtXs="},{"Name":"label","Value":"_content/FAPCLClient/js/exam-scheduling.js"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Accept-Ranges","Value":"bytes"},{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"6558"},{"Name":"Content-Type","Value":"text/javascript"},{"Name":"ETag","Value":"\u0022PWK4s6nSW0W2J\u002BAsGrM2RE\u002BBzME6yKlUCBsvo1PJtXs=\u0022"},{"Name":"Last-Modified","Value":"Tue, 01 Apr 2025 08:18:17 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
     <StaticWebAssetEndpoint Include="_content/FAPCLClient/js/site.js">
       <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\js\site.js'))</AssetFile>
       <Selectors><![CDATA[[]]]></Selectors>

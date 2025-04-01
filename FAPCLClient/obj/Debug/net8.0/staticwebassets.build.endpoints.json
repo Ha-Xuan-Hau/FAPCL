@@ -2797,6 +2797,88 @@
       ]
     },
     {
+      "Route": "js/exam-scheduling.js",
+      "AssetFile": "js/exam-scheduling.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6558"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 01 Apr 2025 08:18:17 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs="
+        }
+      ]
+    },
+    {
+      "Route": "js/exam-scheduling.rer4yanwkv.js",
+      "AssetFile": "js/exam-scheduling.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "6558"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 01 Apr 2025 08:18:17 GMT"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "rer4yanwkv"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-PWK4s6nSW0W2J+AsGrM2RE+BzME6yKlUCBsvo1PJtXs="
+        },
+        {
+          "Name": "label",
+          "Value": "js/exam-scheduling.js"
+        }
+      ]
+    },
+    {
       "Route": "js/site.js",
       "AssetFile": "js/site.js",
       "Selectors": [],
