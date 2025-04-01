@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using FAPCL.DTO;
 using FAPCL.DTO.FAPCL.DTO;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 public class EditModel : PageModel
 {
@@ -25,8 +27,41 @@ public class EditModel : PageModel
 
     [BindProperty] public string? StartDate { get; set; }
     [BindProperty] public string? EndDate { get; set; }
+
+    private (string Id, string Role) GetInfoFromToken()
+    {
+        var token = HttpContext.Session.GetString("Token");
+        if (string.IsNullOrEmpty(token))
+        {
+            return (string.Empty, string.Empty);
+        }
+
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        var Id = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+        var role = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(Id))
+        {
+            RedirectToPage("/Account/Login");
+            return (string.Empty, string.Empty);
+        }
+
+        return (Id, role);
+    }
     public async Task<IActionResult> OnGetAsync(int id)
     {
+        var studentId = GetInfoFromToken().Id;
+        var role = GetInfoFromToken().Role;
+        if (string.IsNullOrEmpty(studentId))
+        {
+            return Redirect("~/Identity/Account/Login");
+        }
+        if (role != "Admin")
+        {
+            return RedirectToPage("/Index");
+        }
         ClassDto = await _httpClient.GetFromJsonAsync<ClassDto>($"{ApiBaseUrl}class-management/classes/{id}/dto") ?? new();
         StartDate = ClassDto.StartDate.ToString("yyyy-MM-dd");
         EndDate = ClassDto.EndDate.ToString("yyyy-MM-dd");
@@ -47,6 +82,12 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        var role = GetInfoFromToken().Role;
+        if (role != "Admin")
+        {
+            TempData["ErrorMessage"] = "Bạn không có quyền.";
+            return RedirectToPage("/Index");
+        }
         if (string.IsNullOrWhiteSpace(ClassDto.ClassName) || string.IsNullOrWhiteSpace(ClassDto.TeacherId))
         {
             TempData["ErrorMessage"] = "Tên lớp học và mã giáo viên không được để trống.";

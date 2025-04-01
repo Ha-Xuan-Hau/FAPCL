@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using FAPCL.DTO;
 using FAPCL.DTO.FAPCL.DTO;
 using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace FAPCLClient.Pages.ClassManagement
 {
@@ -27,8 +29,40 @@ namespace FAPCLClient.Pages.ClassManagement
         [BindProperty] public string? ClassName { get; set; }
         [BindProperty] public int? SelectedCourseId { get; set; }
 
-        public async Task OnGetAsync([FromQuery] string? className, [FromQuery] int? courseId)
+        private (string Id, string Role) GetInfoFromToken()
         {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrEmpty(token))
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var Id = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+            var role = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(Id))
+            {
+                RedirectToPage("/Account/Login");
+                return (string.Empty, string.Empty);
+            }
+
+            return (Id, role);
+        }
+        public async Task<IActionResult> OnGetAsync([FromQuery] string? className, [FromQuery] int? courseId)
+        {
+            var studentId = GetInfoFromToken().Id;
+            var role = GetInfoFromToken().Role;
+            if (string.IsNullOrEmpty(studentId))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
+            if (role != "Admin")
+            {
+                return RedirectToPage("/Index");
+            }
             ClassName = className;
             SelectedCourseId = courseId;
 
@@ -40,6 +74,7 @@ namespace FAPCLClient.Pages.ClassManagement
 
             var query = $"class-management/classes?className={className}&courseId={courseId}";
             Classes = await _httpClient.GetFromJsonAsync<List<ClassDto>>(ApiBaseUrl + query) ?? new();
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync([FromForm] string NewClassName,
@@ -49,6 +84,12 @@ namespace FAPCLClient.Pages.ClassManagement
                                                      [FromForm] string NewTeacherId,
                                                      [FromForm] int NewRoomId)
         {
+            var role = GetInfoFromToken().Role;
+            if (role != "Admin")
+            {
+                TempData["ErrorMessage"] = "Bạn không có quyền tạo lớp học.";
+                return RedirectToPage("/Index");
+            }
             if (string.IsNullOrWhiteSpace(NewClassName) || string.IsNullOrWhiteSpace(NewTeacherId))
             {
                 TempData["ErrorMessage"] = "Tên lớp học và mã giáo viên không được để trống.";

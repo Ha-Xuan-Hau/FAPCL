@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using FAPCL.DTO;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace FAPCLClient.Pages.ScheduleManagement
 {
@@ -29,8 +31,40 @@ namespace FAPCLClient.Pages.ScheduleManagement
         public string ToDate { get; set; }
         public List<TeacherScheduleDto> Schedule { get; set; } = new List<TeacherScheduleDto>();
 
+        private (string Id, string Role) GetInfoFromToken()
+        {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrEmpty(token))
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var Id = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+            var role = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(Id))
+            {
+                RedirectToPage("/Account/Login");
+                return (string.Empty, string.Empty);
+            }
+
+            return (Id, role);
+        }
         public async Task<IActionResult> OnGetAsync()
         {
+            var studentId = GetInfoFromToken().Id;
+            var role = GetInfoFromToken().Role;
+            if (string.IsNullOrEmpty(studentId))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
+            if (role != "Teacher")
+            {
+                return RedirectToPage("/Index");
+            }
             DateTime today = DateTime.Now;
             int currentYear = today.Year;
 
