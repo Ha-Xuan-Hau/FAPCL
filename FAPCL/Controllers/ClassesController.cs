@@ -34,7 +34,6 @@ namespace FAPCL.Controllers
                     CourseId = dto.CourseId,
                     TeacherId = dto.TeacherId,
                     RoomId = dto.RoomId,
-                    SlotId = dto.SlotId,
                     StartDate = dto.StartDate,
                     EndDate = dto.EndDate
                 };

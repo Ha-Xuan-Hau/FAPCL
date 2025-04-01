@@ -16,6 +16,9 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private readonly ILogger<DetailsModel> _logger;
         private readonly JsonSerializerOptions _jsonOptions;
 
+        public string? Token { get; set; }
+        public bool IsAdmin { get; set; }
+
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
 
@@ -42,8 +45,26 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         {
             try
             {
+                Token = HttpContext.Session.GetString("Token");
+                string role = HttpContext.Session.GetString("Role") ?? string.Empty;
+                string userId = HttpContext.Session.GetString("UserId") ?? string.Empty;
+
+                // Check if the user has either Admin or Teacher role
+                bool isAdmin = role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+                bool isTeacher = role.Equals("Teacher", StringComparison.OrdinalIgnoreCase);
+
+                // Check if the user has either role
+                bool hasAccess = isAdmin || isTeacher;
+
+                if (!hasAccess)
+                {
+                    ErrorMessage = "You don't have permission to view the exam list.";
+                    return Page();
+                }
+
                 _logger.LogInformation($"Retrieving exam schedule details for ID: {Id}");
 
+                // Get the exam details from the API
                 var result = await GetScheduleDetailsAsync(Id);
 
                 if (result == null)
@@ -77,6 +98,30 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                     return Page();
                 }
 
+                // For teachers, check if they are associated with this exam
+                if (isTeacher && !string.IsNullOrEmpty(userId))
+                {
+                    bool teacherIsAssociated = false;
+
+                    // Check if the teacher is associated with any of the exams in this schedule
+                    foreach (var exam in ExamInfos)
+                    {
+                        if (exam.Teacher != null && exam.Teacher.TeacherId == userId)
+                        {
+                            teacherIsAssociated = true;
+                            break;
+                        }
+                    }
+
+                    // If the teacher is not associated with any exam in this schedule
+                    if (!teacherIsAssociated)
+                    {
+                        ErrorMessage = "You don't have permission to view this exam schedule as you are not assigned to it.";
+                        ExamInfos = null;
+                        return Page();
+                    }
+                }
+
                 // Extract the exam name from the first exam
                 var firstExam = ExamInfos.First();
                 var examNameParts = firstExam.ExamName?.Split("[Session:");
@@ -92,6 +137,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                 return Page();
             }
         }
+
 
         #region API Calls
         private async Task<DetailedExamResult> GetScheduleDetailsAsync(int scheduleId)
@@ -142,20 +188,19 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private HttpClient CreateHttpClient()
         {
             var client = _httpClientFactory.CreateClient();
-            var baseUrl = _configuration["ApiSettings:BaseUrl"];
-            if (string.IsNullOrEmpty(baseUrl))
-            {
-                throw new Exception("ApiSettings:BaseUrl is not configured.");
-            }
+            // Hardcode the base URL
+            var baseUrl = "http://localhost:5043/api/";
             client.BaseAddress = new Uri(baseUrl);
 
-            var token = User.FindFirst("token")?.Value;
-            if (!string.IsNullOrEmpty(token))
+            // Get token from session instead of claims
+            if (!string.IsNullOrEmpty(Token))
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
             }
             return client;
         }
+
+
         #endregion
     }
 }
