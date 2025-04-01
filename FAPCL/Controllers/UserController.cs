@@ -280,7 +280,71 @@ namespace FAPCL.Controllers
 
             return Ok(new { Message = "A new confirmation email has been sent." });
         }
+        
+        [HttpPost("reset-password-request")]
+        public async Task<IActionResult> ResetPasswordRequest([FromBody] ResetPasswordRequestModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Tìm người dùng theo email
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found." });
+            }
+
+            // Tạo token reset mật khẩu
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // Tạo URL để gửi cho người dùng. Chú ý trỏ về Razor Page.
+            var resetUrl = $"http://localhost:5163/ResetPassword?userId={user.Id}&token={WebUtility.UrlEncode(token)}";
+
+            try
+            {
+                // Gửi email với link reset mật khẩu
+                await _emailSender.SendEmailAsync(
+                    model.Email,
+                    "Reset Your Password",
+                    $"Please reset your password by clicking <a href='{resetUrl}'>here</a>."
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Error sending email: " + ex.Message });
+            }
+
+            return Ok(new { Message = "A reset password link has been sent to your email." });
+        }
 
         
+        
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var user = await _userManager.FindByIdAsync(model.UserId);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found." });
+            }
+
+            // Reset mật khẩu với token
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+            if (result.Succeeded)
+            {
+                return Ok(new { Message = "Password has been reset successfully." });
+            }
+
+            return BadRequest(new { Message = "Error resetting password." });
+        }
+
     }
+    
 } 
