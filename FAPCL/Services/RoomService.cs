@@ -72,6 +72,16 @@ namespace FAPCL.Services
             return true;
         }
 
+        public async Task<bool> ToggleRoomAction(int roomId, bool isAction)
+        {
+            var roomToUpdate = await _context.Rooms.FindAsync(roomId);
+            if (roomToUpdate == null) return false;
+            roomToUpdate.IsAction = isAction;
+            _context.Entry(roomToUpdate).CurrentValues.SetValues(roomToUpdate);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<IEnumerable<Room>> GetAllRooms()
         {
             return await _context.Rooms.ToListAsync();

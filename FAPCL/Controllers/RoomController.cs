@@ -76,5 +76,12 @@ namespace FAPCL.Controllers
             var isDeleted = await _roomService.DeleteRoom(roomId);
             return isDeleted ? Ok($"Room {roomId} deleted successfully") : NotFound($"Room {roomId} not found");
         }
+
+        [HttpGet("admin/room/{roomId}/{isAction}")]
+        public async Task<IActionResult> ToggleRoomAction(int roomId, bool isAction)
+        {
+            var room = await _roomService.ToggleRoomAction(roomId, isAction);
+            return room != null ? Ok(room) : NotFound($"Room with ID {roomId} not found");
+        }
     }
 }

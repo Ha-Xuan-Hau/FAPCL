@@ -27,7 +27,7 @@ namespace FAPCLClient.Pages.ClassroomManagement
         public async Task<IActionResult> OnGetAsync()
         {
             var client = _httpClientFactory.CreateClient();
-            var response = await client.GetFromJsonAsync<List<RoomType>>($"{_apiBaseUrl}/RoomType/roomtypes");
+            var response = await client.GetFromJsonAsync<List<RoomType>>($"{_apiBaseUrl}/RoomType");
 
             if (response == null)
             {
