@@ -1,4 +1,5 @@
-﻿using FAPCL.DTO.ExamSchedule;
+﻿using System.Security.Claims;
+using FAPCL.DTO.ExamSchedule;
 using FAPCL.Services.examSchedule;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +8,7 @@ namespace FAPCL.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize]
     public class ExamScheduleController : ControllerBase
     {
         private readonly IExamScheduleService _schedulingService;
@@ -22,7 +23,7 @@ namespace FAPCL.Controllers
         }
 
         [HttpPost]
-        // [Authorize(Roles ="Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<SchedulingResult>> ScheduleExams(ExamScheduleRequest request)
         {
             if (!ModelState.IsValid)
@@ -69,7 +70,7 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("{id}")]
-        // [Authorize(Roles = "Admin,Teacher")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<ActionResult<DetailedExamResult>> GetScheduleDetails(int id)
         {
             try
@@ -93,7 +94,7 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("list")]
-        // [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetExams([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
             var result = await _schedulingService.ListExamsAsync(startDate, endDate);
@@ -105,7 +106,7 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("currentSemeterCourses")]
-        // [AllowAnonymous]
+        [Authorize(Roles = "Admin,Teacher, Student")]
         public async Task<ActionResult<List<CourseDTO>>> GetCourses()
         {
             try
@@ -123,9 +124,18 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("student/{studentId}")]
-        // [Authorize(Roles = "Student")]
+        [Authorize(Roles = "Student")]
         public async Task<IActionResult> GetStudentExamSchedule(string studentId)
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            // If student, verify they're accessing their own data
+            if (userRole == "Student" && currentUserId != studentId)
+            {
+                return Forbid(); // Return 403 if unauthorized
+            }
+
             DateTime start = GetQuarterStartDate(DateTime.Today);
             DateTime end = GetQuarterEndDate(DateTime.Today);
 
@@ -138,9 +148,18 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("teacher/{teacherId}")]
-        // [Authorize(Roles = "Teacher")]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> GetTeacherExamSchedule(string teacherId)
         {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            // If teacher, verify they're accessing their own data
+            if (userRole == "Teacher" && currentUserId != teacherId)
+            {
+                return Forbid();
+            }
+
             DateTime start = GetQuarterStartDate(DateTime.Today);
             DateTime end = GetQuarterEndDate(DateTime.Today);
 
