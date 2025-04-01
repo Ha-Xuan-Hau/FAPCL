@@ -1,19 +1,29 @@
 @page
-@model FAPCLClient.Pages.ResendConfirmationEmail
-
+@model ResendConfirmationEmailModel
 @{
-    Layout = null;
+    ViewData["Title"] = "Resend Confirmation Email";
 }
 
-<!DOCTYPE html>
+<h1>@ViewData["Title"]</h1>
 
-<html>
-<head>
-    <title></title>
-</head>
-<body>
-<div>
-    
-</div>
-</body>
-</html>
+<form method="post">
+    <div class="form-group">
+        <label for="email">Enter your email to resend confirmation:</label>
+        <input type="email" id="email" name="Email" class="form-control" required />
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Resend Confirmation Email</button>
+</form>
+
+@if (Model.ErrorMessage != null)
+{
+    <div class="alert alert-danger mt-3">
+        @Model.ErrorMessage
+    </div>
+}
+
+@if (Model.SuccessMessage != null)
+{
+    <div class="alert alert-success mt-3">
+        @Model.SuccessMessage
+    </div>
+}
