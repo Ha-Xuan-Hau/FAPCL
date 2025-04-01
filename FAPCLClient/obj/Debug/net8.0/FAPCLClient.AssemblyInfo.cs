@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FAPCLClient")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ad00ea9a9f5475f9e8f081c10229367ffe486339")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+951ccd1109b8d42050ccd1c4ec9dde9ca9ff44bc")]
 [assembly: System.Reflection.AssemblyProductAttribute("FAPCLClient")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FAPCLClient")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

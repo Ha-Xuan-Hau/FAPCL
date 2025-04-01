@@ -98,6 +98,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbVNjaGVkdWxlTWFuYWdlbWVudFxJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/PRN231_PRJ2/FAPCLClient/Pages/ExamScheduleManagement/ScheduleExams.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbVNjaGVkdWxlTWFuYWdlbWVudFxTY2hlZHVsZUV4YW1zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/PRN231_PRJ2/FAPCLClient/Pages/ExamScheduleManagement/TeacherScheduleExams.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXhhbVNjaGVkdWxlTWFuYWdlbWVudFxUZWFjaGVyU2NoZWR1bGVFeGFtcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/PRN231_PRJ2/FAPCLClient/Pages/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
