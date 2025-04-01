@@ -13,5 +13,6 @@ namespace FAPCL.Services
         Task<bool> DeleteRoom(int roomId);
         Task<(IEnumerable<Room> Rooms, int TotalPages)> GetRooms(DateTime? selectedDate, int? roomTypeId, bool? hasProjector, bool? hasSoundSystem, int currentPage);
         Task<bool> CheckSlotAvailability(int roomId, int slotId, DateTime selectedDate);
+        Task<bool> ToggleRoomAction(int roomId, bool isAction);
     }
 }
