@@ -3,6 +3,7 @@ using FAPCLClient.Model;
 using FAPCLClient.Model.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -15,19 +16,25 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private readonly ILogger<IndexModel> _logger;
         private readonly JsonSerializerOptions _jsonOptions;
 
+        public string? Token { get; set; }
+        public bool IsAdmin { get; set; }
+
         public List<ExamListItem> Exams { get; set; } = new List<ExamListItem>();
         public string ErrorMessage { get; set; }
 
         [BindProperty(SupportsGet = true)]
-        public DateTime StartDate { get; set; } = DateTime.Today;
+        public DateTime StartDate { get; set; } = GetQuarterStartDate(DateTime.Today);
+
         [BindProperty(SupportsGet = true)]
-        public DateTime EndDate { get; set; } = DateTime.Today.AddDays(+14);
+        public DateTime EndDate { get; set; } = GetQuarterEndDate(DateTime.Today);
+
 
         [BindProperty(SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
 
         public int TotalPages { get; set; }
         private const int PageSize = 10;
+
 
         public IndexModel(
             IHttpClientFactory httpClientFactory,
@@ -48,6 +55,37 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         {
             try
             {
+                Token = HttpContext.Session.GetString("Token");
+
+                // Extract role from JWT token
+                bool isAdmin = false;
+                if (!string.IsNullOrEmpty(Token))
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var jsonToken = handler.ReadToken(Token) as JwtSecurityToken;
+
+                    if (jsonToken != null)
+                    {
+                        // Look for role claims
+                        var roleClaim = jsonToken.Claims.FirstOrDefault(c =>
+                            c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" ||
+                            c.Type == "role");
+
+                        Console.WriteLine($"Role from JWT token: '{roleClaim?.Value}'");
+                        isAdmin = roleClaim?.Value == "Admin";
+                    }
+                }
+
+                IsAdmin = isAdmin;
+    
+
+                if (!IsAdmin)
+                {
+                    ErrorMessage = "You don't have permission to view the exam list.";
+                    Exams = new List<ExamListItem>(); // Empty list
+                    return Page();
+                }
+
                 var exams = await GetAllExamsAsync();
                 if (exams != null)
                 {
@@ -109,20 +147,33 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private HttpClient CreateHttpClient()
         {
             var client = _httpClientFactory.CreateClient();
-            var baseUrl = _configuration["ApiSettings:BaseUrl"];
-            if (string.IsNullOrEmpty(baseUrl))
-            {
-                throw new Exception("ApiSettings:BaseUrl is not configured.");
-            }
+            // Hardcode the base URL
+            var baseUrl = "http://localhost:5043/api/";
             client.BaseAddress = new Uri(baseUrl);
 
-            var token = User.FindFirst("token")?.Value;
-            if (!string.IsNullOrEmpty(token))
+            // Get token from session instead of claims
+            if (!string.IsNullOrEmpty(Token))
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Token);
             }
             return client;
         }
+
+
+
         #endregion
+
+        private static DateTime GetQuarterStartDate(DateTime date)
+        {
+            int quarterStartMonth = ((date.Month - 1) / 4) * 4 + 1;
+            return new DateTime(date.Year, quarterStartMonth, 1);
+        }
+
+        private static DateTime GetQuarterEndDate(DateTime date)
+        {
+            int endMonth = ((date.Month - 1) / 4) * 4 + 4;
+            int daysInMonth = DateTime.DaysInMonth(date.Year, endMonth);
+            return new DateTime(date.Year, endMonth, daysInMonth);
+        }
     }
 }

@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using FAPCLClient.Model;
 using FAPCL.DTO.ExamSchedule;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace FAPCLClient.Pages.ExamScheduleManagement
 {
@@ -17,6 +18,9 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private readonly IConfiguration _configuration;
         private readonly ILogger<CreateModel> _logger;
         private readonly JsonSerializerOptions _jsonOptions;
+
+        public string? Token { get; set; }
+        public bool IsAdmin { get; set; }
 
         [BindProperty]
         public string ExamType { get; set; }
@@ -55,6 +59,34 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         {
             try
             {
+                Token = HttpContext.Session.GetString("Token");
+                // Extract role from JWT token
+                bool isAdmin = false;
+                if (!string.IsNullOrEmpty(Token))
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var jsonToken = handler.ReadToken(Token) as JwtSecurityToken;
+
+                    if (jsonToken != null)
+                    {
+                        // Look for role claims
+                        var roleClaim = jsonToken.Claims.FirstOrDefault(c =>
+                            c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" ||
+                            c.Type == "role");
+
+                        Console.WriteLine($"Role from JWT token: '{roleClaim?.Value}'");
+                        isAdmin = roleClaim?.Value == "Admin";
+                    }
+                }
+
+                IsAdmin = isAdmin;
+
+                if (!IsAdmin)
+                {
+                    ErrorMessage = "You don't have permission to view the exam list.";
+                    return Page();
+                }
+
                 // Set initial values
                 StartDate = DateTime.Today;
                 EndDate = DateTime.Today.AddDays(13);
@@ -85,6 +117,34 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
 
         public async Task<IActionResult> OnPostAsync()
         {
+            Token = HttpContext.Session.GetString("Token");
+            // Extract role from JWT token
+            bool isAdmin = false;
+            if (!string.IsNullOrEmpty(Token))
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(Token) as JwtSecurityToken;
+
+                if (jsonToken != null)
+                {
+                    // Look for role claims
+                    var roleClaim = jsonToken.Claims.FirstOrDefault(c =>
+                        c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" ||
+                        c.Type == "role");
+
+                    Console.WriteLine($"Role from JWT token: '{roleClaim?.Value}'");
+                    isAdmin = roleClaim?.Value == "Admin";
+                }
+            }
+            
+            IsAdmin = isAdmin;
+
+            if (!IsAdmin)
+            {
+                ErrorMessage = "You don't have permission to view the exam list.";
+                return Page();
+            }
+
             if (!ModelState.IsValid)
             {
                 await LoadCoursesData();
@@ -211,17 +271,14 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
         private HttpClient CreateHttpClient()
         {
             var client = _httpClientFactory.CreateClient();
-            var baseUrl = _configuration["ApiSettings:BaseUrl"];
-            if (string.IsNullOrEmpty(baseUrl))
-            {
-                throw new Exception("ApiSettings:BaseUrl is not configured.");
-            }
+            // Hardcode the base URL
+            var baseUrl = "http://localhost:5043/api/";
             client.BaseAddress = new Uri(baseUrl);
 
-            var token = User.FindFirst("token")?.Value;
-            if (!string.IsNullOrEmpty(token))
+            // Get token from session instead of claims
+            if (!string.IsNullOrEmpty(Token))
             {
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token);
             }
             return client;
         }
