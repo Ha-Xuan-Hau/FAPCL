@@ -66,7 +66,7 @@ namespace FAPCLClient.Areas.Identity.Pages.Account
             var json = JsonSerializer.Serialize(loginData);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync("https://localhost:7007/api/User/login", content);
+            var response = await _httpClient.PostAsync("http://localhost:5043/api/User/login", content);
 
             if (response.IsSuccessStatusCode)
             {

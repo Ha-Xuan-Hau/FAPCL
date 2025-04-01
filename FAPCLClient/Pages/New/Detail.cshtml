@@ -1,0 +1,29 @@
+﻿@page
+@model FAPCLClient.Pages.New.DetailModel
+@{
+    ViewData["Title"] = "News Detail";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <h1 class="mb-4">News Detail</h1>
+
+    @if (Model.News != null)
+    {
+        <div class="card">
+            <div class="card-header">
+                <h3>@Model.News.Title</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Published Date:</strong> @Model.News.CreatedAt?.ToString("dd/MM/yyyy")</p>
+
+                <hr>
+                <p>@Model.News.Content</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">News not found.</div>
+    }
+</div>
