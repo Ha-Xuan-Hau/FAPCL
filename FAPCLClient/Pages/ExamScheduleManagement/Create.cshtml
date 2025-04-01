@@ -4,152 +4,144 @@
     ViewData["Title"] = "Schedule New Exam";
 }
 
-@if (!string.IsNullOrEmpty(Model.ErrorMessage))
-{
-    <div class="alert alert-danger mt-4">
-        <h4 class="alert-heading">Access Denied</h4>
-        <p>@Model.ErrorMessage</p>
-    </div>
-    <div class="text-center mt-4">
-        <a href="javascript:history.back()" class="btn btn-primary">
-            <i class="bi bi-arrow-left"></i> Go Back
-        </a>
-    </div>
-}
-else
-{
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Create Exam Schedule</h2>
-        <a href="javascript:history.back()" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back to List
+        <a asp-page="/ExamScheduleManagement/Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to List
         </a>
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage
-        </div>
-    }
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger mt-4">
+        <h4 class="alert-heading">Error</h4>
+        <p>@Model.ErrorMessage</p>
+    </div>
+}
 
-    <form method="post">
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-info text-white">
-                <h5 class="my-0">Exam Type Selection</h5>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label asp-for="ExamType" class="form-label">Exam Type</label>
-                            <select asp-for="ExamType" class="form-select" id="examTypeSelect" required>
-                                <option value="">-- Select Exam Type --</option>
-                                <option value="PE">Practical Exam</option>
-                                <option value="FE">Final Exam</option>
-                                @* <option value="2NDFE">Second Final Exam</option> *@
-                            </select>
-                            <span asp-validation-for="ExamType" class="text-danger"></span>
+    @if (!Model.ErrorMessage?.Contains("permission") ?? true)
+    {
+        <!-- Form only hidden if permission error -->
+        <form method="post">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="my-0">Exam Type Selection</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ExamType" class="form-label">Exam Type</label>
+                                <select asp-for="ExamType" class="form-select" id="examTypeSelect" required>
+                                    <option value="">-- Select Exam Type --</option>
+                                    <option value="PE">Practical Exam</option>
+                                    <option value="FE">Final Exam</option>
+                                    @* <option value="2NDFE">Second Final Exam</option> *@
+                                </select>
+                                <span asp-validation-for="ExamType" class="text-danger"></span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label asp-for="ExamName" class="form-label">Exam Code</label>
-                            <input asp-for="ExamName" class="form-control" readonly id="examNameField" />
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="ExamName" class="form-label">Exam Code</label>
+                                <input asp-for="ExamName" class="form-control" readonly id="examNameField" />
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-info text-white">
-                <h5 class="my-0">Course Selection</h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted">Select up to 4 courses for this exam schedule</p>
+            <!-- Rest of your form here -->
+            <!-- Course selection card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="my-0">Course Selection</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Select up to 4 courses for this exam schedule</p>
 
-                <div id="courseSelectionContainer">
-                    @for (int i = 0; i < Model.SelectedCourseIds.Count; i++)
-                    {
-                        <div class="row mb-3 course-row">
-                            <div class="col-md-10">
-                                <select name="SelectedCourseIds[@i]" class="form-select course-select">
-                                    <option value="0">-- Select Course --</option>
-                                    @if (Model.AvailableCourses != null)
-                                    {
-                                        foreach (var item in Model.AvailableCourses)
+                    <div id="courseSelectionContainer">
+                        @for (int i = 0; i < Model.SelectedCourseIds.Count; i++)
+                        {
+                            <div class="row mb-3 course-row">
+                                <div class="col-md-10">
+                                    <select name="SelectedCourseIds[@i]" class="form-select course-select">
+                                        <option value="0">-- Select Course --</option>
+                                        @if (Model.AvailableCourses != null)
                                         {
-                                            if (item.Value == Model.SelectedCourseIds[i].ToString())
+                                            foreach (var item in Model.AvailableCourses)
                                             {
-                                                <option value="@item.Value" selected="selected">@item.Text</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@item.Value">@item.Text</option>
+                                                if (item.Value == Model.SelectedCourseIds[i].ToString())
+                                                {
+                                                    <option value="@item.Value" selected="selected">@item.Text</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@item.Value">@item.Text</option>
+                                                }
                                             }
                                         }
-                                    }
-                                </select>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-outline-danger remove-course"
+                                    @(i == 0 && Model.SelectedCourseIds.Count == 1 ? "style=\"display:none;\"" : "")>
+                                        <i class="bi bi-trash"></i> Remove
+                                    </button>
+                                </div>
                             </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-outline-danger remove-course"
-                                @(i == 0 && Model.SelectedCourseIds.Count == 1 ? "style=\"display:none;\"" : "")>
-                                    <i class="bi bi-trash"></i> Remove
-                                </button>
+                        }
+                    </div>
+                    <button type="button" id="addCourseBtn" class="btn btn-secondary">
+                        <i class="bi bi-plus-circle"></i> Add Course
+                    </button>
+                </div>
+            </div>
+
+            <!-- Date range card -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="my-0">Exam Period</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="StartDate" class="form-label">Start Date</label>
+                                <input asp-for="StartDate" class="form-control" type="date" id="startDatePicker" required />
+                                <span asp-validation-for="StartDate" class="text-danger"></span>
                             </div>
                         </div>
-                    }
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="EndDate" class="form-label">End Date</label>
+                                <input asp-for="EndDate" class="form-control" type="date" id="endDatePicker" required />
+                                <span asp-validation-for="EndDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="dateRangeInfo" class="alert alert-info mt-3" style="display: none;">
+                        Selected period: <span id="dayCount">0</span> days
+                    </div>
+
+                    <div id="dateRangeError" class="alert alert-danger mt-3" style="display: none;"></div>
                 </div>
-                <button type="button" id="addCourseBtn" class="btn btn-secondary">
-                    <i class="bi bi-plus-circle"></i> Add Course
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-lg btn-success" id="scheduleButton">
+                    <i class="bi bi-calendar-check"></i> Schedule Exams
                 </button>
             </div>
-        </div>
-
-
-        <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-info text-white">
-                <h5 class="my-0">Exam Period</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label asp-for="StartDate" class="form-label">Start Date</label>
-                            <input asp-for="StartDate" class="form-control" type="date" id="startDatePicker" required />
-                            <span asp-validation-for="StartDate" class="text-danger"></span>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label asp-for="EndDate" class="form-label">End Date</label>
-                            <input asp-for="EndDate" class="form-control" type="date" id="endDatePicker" required />
-                            <span asp-validation-for="EndDate" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="dateRangeInfo" class="alert alert-info mt-3" style="display: none;">
-                    Selected period: <span id="dayCount">0</span> days
-                </div>
-
-                <div id="dateRangeError" class="alert alert-danger mt-3" style="display: none;"></div>
-            </div>
-        </div>
-
-        <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-lg btn-success" id="scheduleButton">
-                <i class="bi bi-calendar-check"></i> Schedule Exams
-            </button>
-        </div>
-    </form>
+        </form>
+    }
 </div>
-}
+
 @section Scripts {
     <script src="~/js/exam-scheduling.js"></script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
-

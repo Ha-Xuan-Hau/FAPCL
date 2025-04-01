@@ -203,6 +203,33 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
             }
         }
 
+        // private async Task<SchedulingResult> ScheduleExamsAsync(ExamScheduleRequest request)
+        // {
+        //     try
+        //     {
+        //         var client = CreateHttpClient();
+
+        //         var json = JsonSerializer.Serialize(request);
+        //         var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        //         var response = await client.PostAsync("ExamSchedule", content);
+        //         var responseContent = await response.Content.ReadAsStringAsync();
+
+        //         if (response.IsSuccessStatusCode)
+        //         {
+        //             return JsonSerializer.Deserialize<SchedulingResult>(responseContent, _jsonOptions);
+        //         }
+
+        //         ErrorMessage = $"API error: {responseContent}";
+        //         return new SchedulingResult { Success = false, Message = responseContent };
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         _logger.LogError(ex, "Error scheduling exams");
+        //         return new SchedulingResult { Success = false, Message = "An error occurred while communicating with the API" };
+        //     }
+        // }
+
         private async Task<SchedulingResult> ScheduleExamsAsync(ExamScheduleRequest request)
         {
             try
@@ -220,8 +247,24 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                     return JsonSerializer.Deserialize<SchedulingResult>(responseContent, _jsonOptions);
                 }
 
-                ErrorMessage = $"API error: {responseContent}";
-                return new SchedulingResult { Success = false, Message = responseContent };
+                // For error responses: try to deserialize to get the error message
+                try
+                {
+                    // Attempt to deserialize the error response
+                    var errorResult = JsonSerializer.Deserialize<SchedulingResult>(responseContent, _jsonOptions);
+                    return errorResult ?? new SchedulingResult { Success = false, Message = "Failed to parse error response" };
+                }
+                catch
+                {
+                    // If we can't deserialize, return a SchedulingResult with the raw content
+                    return new SchedulingResult
+                    {
+                        Success = false,
+                        Message = responseContent.Contains("Cannot schedule")
+                            ? JsonSerializer.Deserialize<SchedulingResult>(responseContent, _jsonOptions)?.Message
+                            : $"API error: {responseContent}"
+                    };
+                }
             }
             catch (Exception ex)
             {
@@ -229,6 +272,7 @@ namespace FAPCLClient.Pages.ExamScheduleManagement
                 return new SchedulingResult { Success = false, Message = "An error occurred while communicating with the API" };
             }
         }
+
 
         private HttpClient CreateHttpClient()
         {

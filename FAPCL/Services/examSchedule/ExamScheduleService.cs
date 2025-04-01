@@ -29,20 +29,60 @@ namespace FAPCL.Services.examSchedule
             DateTime startDate,
             DateTime endDate)
         {
-            //check existed exam
-            bool examExists = await _context.Exams
-                .AnyAsync(e => courseIds.Contains(e.CourseId)
-                && e.ExamDate >= startDate
-                && e.ExamDate <= endDate
-                && e.ExamName.StartsWith(examName));
 
-
-            if (examExists)
+            string examType = examName;
+            if (examName.Contains(" "))
             {
+                examType = examName.Split(' ')[0];
+            }
+
+            // Get quarter bounds for validation
+            var quarterStart = GetQuarterStartDate(startDate);
+            var quarterEnd = GetQuarterEndDate(endDate);
+
+            _logger.LogInformation($"Validating exam scheduling: Type={examType}, Quarter={quarterStart:yyyy-MM-dd} to {quarterEnd:yyyy-MM-dd}");
+
+            // Check for existing exams of the same type in the quarter
+            var conflictingCourses = await _context.Exams
+                .Where(e => courseIds.Contains(e.CourseId) &&
+                           e.ExamDate >= quarterStart &&
+                           e.ExamDate <= quarterEnd)
+                .Join(_context.Courses,
+                      e => e.CourseId,
+                      c => c.CourseId,
+                      (e, c) => new
+                      {
+                          Exam = e,
+                          Course = c
+                      })
+                .ToListAsync();
+
+            // Filter in memory to accurately get conflicts with same exam type
+            var typeConflicts = conflictingCourses
+                .Where(ec =>
+                {
+                    string existingType = ec.Exam.ExamName;
+                    if (ec.Exam.ExamName.Contains(" "))
+                    {
+                        existingType = ec.Exam.ExamName.Split(' ')[0];
+                    }
+                    return existingType.Equals(examType, StringComparison.OrdinalIgnoreCase);
+                })
+                .Select(ec => new
+                {
+                    CourseId = ec.Course.CourseId,
+                    CourseName = ec.Course.CourseName
+                })
+                .DistinctBy(c => c.CourseId)
+                .ToList();
+
+            if (typeConflicts.Any())
+            {
+                var conflictNames = string.Join(", ", typeConflicts.Select(c => c.CourseName));
                 return new SchedulingResult
                 {
                     Success = false,
-                    Message = "An exam schedule already exists in the given time period for one or more of the selected courses."
+                    Message = $"Cannot schedule '{examType}' exams. The following courses already have this type of exam scheduled in the current quarter: {conflictNames}"
                 };
             }
 
@@ -50,6 +90,7 @@ namespace FAPCL.Services.examSchedule
 
             try
             {
+
                 // 1. Validate input and check if courses exist.
                 var courses = await _context.Courses
                     .Where(c => courseIds.Contains(c.CourseId))
@@ -739,6 +780,20 @@ namespace FAPCL.Services.examSchedule
 
 
         #endregion
+
+        private static DateTime GetQuarterStartDate(DateTime date)
+        {
+            int quarterStartMonth = ((date.Month - 1) / 4) * 4 + 1;
+            return new DateTime(date.Year, quarterStartMonth, 10);
+        }
+
+        private static DateTime GetQuarterEndDate(DateTime date)
+        {
+            int endMonth = ((date.Month - 1) / 4) * 4 + 4;
+            int daysInMonth = DateTime.DaysInMonth(date.Year, endMonth);
+            return new DateTime(date.Year, endMonth, daysInMonth);
+        }
+
     }
 
     #region Helper Classes
