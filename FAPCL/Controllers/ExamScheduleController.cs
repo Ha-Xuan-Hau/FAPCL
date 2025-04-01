@@ -1,11 +1,14 @@
-﻿using FAPCL.DTO.ExamSchedule;
+﻿using System.Security.Claims;
+using FAPCL.DTO.ExamSchedule;
 using FAPCL.Services.examSchedule;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FAPCL.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ExamScheduleController : ControllerBase
     {
         private readonly IExamScheduleService _schedulingService;
@@ -20,6 +23,7 @@ namespace FAPCL.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<SchedulingResult>> ScheduleExams(ExamScheduleRequest request)
         {
             if (!ModelState.IsValid)
@@ -66,6 +70,7 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<ActionResult<DetailedExamResult>> GetScheduleDetails(int id)
         {
             try
@@ -89,6 +94,7 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("list")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetExams([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
             var result = await _schedulingService.ListExamsAsync(startDate, endDate);
@@ -100,10 +106,11 @@ namespace FAPCL.Controllers
         }
 
         [HttpGet("currentSemeterCourses")]
+        [Authorize(Roles = "Admin,Teacher, Student")]
         public async Task<ActionResult<List<CourseDTO>>> GetCourses()
         {
             try
-            {     
+            {
                 DateTime end = DateTime.Today;
                 DateTime start = end.AddMonths(-3);
                 var courses = await _schedulingService.GetCoursesAsync(start, end);
@@ -115,5 +122,68 @@ namespace FAPCL.Controllers
                 return StatusCode(500, "An unexpected error occurred");
             }
         }
+
+        [HttpGet("student/{studentId}")]
+        [Authorize(Roles = "Student")]
+        public async Task<IActionResult> GetStudentExamSchedule(string studentId)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            // If student, verify they're accessing their own data
+            if (userRole == "Student" && currentUserId != studentId)
+            {
+                return Forbid(); // Return 403 if unauthorized
+            }
+
+            DateTime start = GetQuarterStartDate(DateTime.Today);
+            DateTime end = GetQuarterEndDate(DateTime.Today);
+
+            var result = await _schedulingService.GetStudentExamScheduleAsync(studentId, start, end);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.Message);
+            }
+            return Ok(result.Data);
+        }
+
+        [HttpGet("teacher/{teacherId}")]
+        [Authorize(Roles = "Teacher")]
+        public async Task<IActionResult> GetTeacherExamSchedule(string teacherId)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            // If teacher, verify they're accessing their own data
+            if (userRole == "Teacher" && currentUserId != teacherId)
+            {
+                return Forbid();
+            }
+
+            DateTime start = GetQuarterStartDate(DateTime.Today);
+            DateTime end = GetQuarterEndDate(DateTime.Today);
+
+            var result = await _schedulingService.GetTeacherExamScheduleAsync(teacherId, start, end);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result.Message);
+            }
+            return Ok(result.Data);
+        }
+
+
+        private static DateTime GetQuarterStartDate(DateTime date)
+        {
+            int quarterStartMonth = ((date.Month - 1) / 4) * 4 + 1;
+            return new DateTime(date.Year, quarterStartMonth, 10);
+        }
+
+        private static DateTime GetQuarterEndDate(DateTime date)
+        {
+            int endMonth = ((date.Month - 1) / 4) * 4 + 4;
+            int daysInMonth = DateTime.DaysInMonth(date.Year, endMonth);
+            return new DateTime(date.Year, endMonth, daysInMonth);
+        }
+
     }
 }
