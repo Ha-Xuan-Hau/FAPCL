@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace FAPCLClient.Pages;
-
-public class Logout : PageModel
+public class LogoutModel : PageModel
 {
     public void OnGet()
     {
-        
+        HttpContext.Session.Clear();
+        RedirectToPage("/");
     }
 }

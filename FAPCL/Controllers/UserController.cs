@@ -234,7 +234,53 @@ namespace FAPCL.Controllers
 
             return BadRequest("The token is invalid or has expired. Please request a new confirmation email.");
         }
+        
+        [HttpPost("resend-confirmation-email")]
+        public async Task<IActionResult> ResendConfirmationEmail([FromBody] ResendEmailModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found." });
+            }
 
+            if (user.EmailConfirmed)
+            {
+                return BadRequest(new { Message = "Email has already been confirmed." });
+            }
+
+            // Generate a new email confirmation token
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            // Create the callback URL
+            var callbackUrl = Url.Action(
+                "ConfirmEmail", 
+                "User", 
+                new { userId = user.Id, code = WebUtility.UrlEncode(code) }, 
+                Request.Scheme);
+
+            try
+            {
+                // Send confirmation email again
+                await _emailSender.SendEmailAsync(
+                    model.Email,
+                    "Confirm your email",
+                    $"Please confirm your account by <a href='{callbackUrl}'>clicking here</a>."
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Error sending email: " + ex.Message });
+            }
+
+            return Ok(new { Message = "A new confirmation email has been sent." });
+        }
+
+        
     }
 } 

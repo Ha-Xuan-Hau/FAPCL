@@ -1,11 +1,12 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace FAPCLClient.Pages;
-
-public class ConfirmEmail : PageModel
+public class ConfirmEmailModel : PageModel
 {
+
+
     public void OnGet()
     {
-        
+
     }
 }
