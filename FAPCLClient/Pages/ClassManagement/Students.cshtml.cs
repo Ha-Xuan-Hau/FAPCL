@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using FAPCL.DTO;
 using Microsoft.AspNetCore.Mvc;
 using FAPCLClient.Model;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace FAPCLClient.Pages.ClassManagement
 {
@@ -18,18 +20,48 @@ namespace FAPCLClient.Pages.ClassManagement
         {
             _httpClient = httpClient;
         }
+        private (string Id, string Role) GetInfoFromToken()
+        {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrEmpty(token))
+            {
+                return (string.Empty, string.Empty);
+            }
 
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var Id = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+            var role = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(Id))
+            {
+                RedirectToPage("/Account/Login");
+                return (string.Empty, string.Empty);
+            }
+
+            return (Id, role);
+        }
         public List<StudentClassDto> Students { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
         public int ClassId { get; set; }
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
+            var (studentId, role) = GetInfoFromToken();
+            if (string.IsNullOrEmpty(studentId))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
+            if (role != "Admin")
+            {
+                return RedirectToPage("/Index");
+            }
             if (ClassId == 0)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy thông tin lớp học.";
-                return;
+                return Page();
             }
 
             var response = await _httpClient.GetFromJsonAsync<ApiResponse>(ApiBaseUrl + $"enroll/class-students/{ClassId}");
@@ -40,17 +72,16 @@ namespace FAPCLClient.Pages.ClassManagement
                 {
                     TempData["SuccessMessage"] = response.Message;
                 }
-
-                if (response.Students != null)
-                {
-                    Students = response.Students;
-                }
+                Students = response.Students ?? new();
             }
             else
             {
                 TempData["ErrorMessage"] = "Không thể lấy danh sách sinh viên.";
             }
+
+            return Page();
         }
+
 
         public async Task<IActionResult> OnPostChangeMultipleStatusAsync(string[] selectedStudents, string newStatus)
         {

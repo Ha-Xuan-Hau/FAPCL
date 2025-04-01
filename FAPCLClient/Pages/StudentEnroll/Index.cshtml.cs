@@ -20,37 +20,42 @@ namespace FAPCLClient.Pages.StudentEnroll
             _httpClient = httpClient;
         }
 
-        private string GetStudentIdFromToken()
+        private (string Id, string Role) GetInfoFromToken()
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrEmpty(token))
             {
-                Message = "Token không hợp lệ!";
-                return string.Empty;
+                return (string.Empty, string.Empty);
             }
 
             var handler = new JwtSecurityTokenHandler();
             var jwtToken = handler.ReadJwtToken(token);
-            var studentId = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(studentId))
+            var Id = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+            var role = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(Id))
             {
-                Message = "Không tìm thấy studentId trong token!";
                 RedirectToPage("/Account/Login");
-                return string.Empty;
+                return (string.Empty, string.Empty);
             }
 
-            return studentId;
+            return (Id, role);
         }
+
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var studentId = GetStudentIdFromToken();
+            var studentId = GetInfoFromToken().Id;
+            var role = GetInfoFromToken().Role;
             if (string.IsNullOrEmpty(studentId))
             {
                 return Redirect("~/Identity/Account/Login");
             }
-
+            if (role != "Student")
+            {
+                return RedirectToPage("/Index");
+            }
             var availableClassesResponse = await _httpClient.GetFromJsonAsync<List<ClassEnrollmentDto>>("http://localhost:5043/api/enroll/available-classes");
             Classes = availableClassesResponse ?? new List<ClassEnrollmentDto>();
 
@@ -63,8 +68,16 @@ namespace FAPCLClient.Pages.StudentEnroll
 
         public async Task<IActionResult> OnPostRegisterAsync(int classId)
         {
-            var studentId = GetStudentIdFromToken();
-            if (string.IsNullOrEmpty(studentId)) return RedirectToPage("/Account/Login");
+            var studentId = GetInfoFromToken().Id;
+            var role = GetInfoFromToken().Role;
+            if (string.IsNullOrEmpty(studentId))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
+            if (role != "Student")
+            {
+                return RedirectToPage("/Index");
+            }
 
             var studentClass = new
             {
@@ -88,8 +101,16 @@ namespace FAPCLClient.Pages.StudentEnroll
 
         public async Task<IActionResult> OnPostCancelAsync(int classId)
         {
-            var studentId = GetStudentIdFromToken();
-            if (string.IsNullOrEmpty(studentId)) return RedirectToPage("/Account/Login");
+            var studentId = GetInfoFromToken().Id;
+            var role = GetInfoFromToken().Role;
+            if (string.IsNullOrEmpty(studentId))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
+            if (role != "Student")
+            {
+                return RedirectToPage("/Index");
+            }
 
             var studentClass = new
             {

@@ -23,6 +23,11 @@ namespace FAPCLClient.Pages.ScheduleManagement
 
         public async Task<IActionResult> OnGetAsync()
         {
+            string token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrEmpty(token))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
             var response = await _httpClient.GetAsync($"http://localhost:5043/api/class-management/classes/{ClassId}/students");
             if (!response.IsSuccessStatusCode)
             {

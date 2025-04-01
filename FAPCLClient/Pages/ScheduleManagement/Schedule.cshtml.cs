@@ -6,6 +6,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using FAPCL.DTO;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace FAPCLClient.Pages.ScheduleManagement
 {
@@ -29,8 +31,40 @@ namespace FAPCLClient.Pages.ScheduleManagement
         public string ToDate { get; set; }
         public List<ScheduleEntryDto> Schedules { get; set; }
 
+        private (string Id, string Role) GetInfoFromToken()
+        {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrEmpty(token))
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var Id = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier)?.Value;
+            var role = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role)?.Value;
+
+            if (string.IsNullOrEmpty(Id))
+            { 
+                RedirectToPage("/Account/Login");
+                return (string.Empty, string.Empty);
+            }
+
+            return (Id, role);
+        }
         public async Task<IActionResult> OnGet()
         {
+            var studentId = GetInfoFromToken().Id;
+            var role = GetInfoFromToken().Role;
+            if (string.IsNullOrEmpty(studentId))
+            {
+                return Redirect("~/Identity/Account/Login");
+            }
+            if (role != "Student")
+            {
+                return RedirectToPage("/Index");
+            }
             DateTime today = DateTime.Now;
             int currentYear = today.Year;
 
