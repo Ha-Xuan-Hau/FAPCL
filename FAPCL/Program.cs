@@ -99,6 +99,7 @@ builder.Services.AddScoped<IRoomService, RoomService>();
 builder.Services.AddScoped<ISlotService, SlotService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IExamScheduleService, ExamScheduleService>();
+builder.Services.AddScoped<INewsService, NewsService>();
 
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 
