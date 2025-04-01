@@ -1,0 +1,51 @@
+﻿@page
+@model FAPCLClient.Pages.NewsManagement.CreateModel
+@{
+ViewData["Title"] = "News Management";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+
+}
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Create News</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div class="mb-3">
+                            <label asp-for="News.title" class="form-label">Title</label>
+                            <input asp-for="News.title" class="form-control" required />
+                            <span asp-validation-for="News.title" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label asp-for="News.content" class="form-label">Content</label>
+                            <textarea asp-for="News.content" id="newsEditor" class="form-control" rows="10" required></textarea>
+                            <span asp-validation-for="News.content" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input asp-for="News.isPublished" class="form-check-input" />
+                            <label asp-for="News.isPublished" class="form-check-label">Publish immediately</label>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a asp-page="./Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to List
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-plus-circle"></i> Create News
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
