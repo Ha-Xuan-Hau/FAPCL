@@ -73,6 +73,10 @@
     }
 
 </style>
+<head>
+    <!-- Thêm Font Awesome từ CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+</head>
 
 <div class="container1">
     <h1 class="text-center mb-4">@ViewData["Title"]</h1>
@@ -183,8 +187,7 @@
                                                 button.setAttribute("onclick", `toggleVisibility('${room.roomId}', '${!room.isAction}')`);
                                             })
                                             .catch(error => {
-                                                console.error('Error:', error);
-                                                alert('Lỗi cập nhật trạng thái phòng');
+                                                window.location.reload();
                                             });
                                     }
                                 </script>

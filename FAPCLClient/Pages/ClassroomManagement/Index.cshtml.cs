@@ -48,9 +48,9 @@ namespace FAPCLClient.Pages.ClassroomManagement
             };
             
             string queryString = string.Join("&", queryParams.Where(q => q.Value != null).Select(q => $"{q.Key}={q.Value}"));
-            string url = $"{ApiBaseUrl}/Room/rooms?{queryString}";
+            string url = $"{ApiBaseUrl}/Room/admin/room";
             
-            var response = await _httpClient.GetFromJsonAsync<RoomResponse>(url);
+            var response = await _httpClient.GetFromJsonAsync<List<Room>>(url);
             
             string urlRoomTypes = $"{ApiBaseUrl}/RoomType";
             
@@ -62,9 +62,7 @@ namespace FAPCLClient.Pages.ClassroomManagement
             
             if (response != null)
             {
-                Room = response.Rooms;
-                TotalPages = response.TotalPages;
-                CurrentPage = currentPage;
+                Room = response;
             }
 
             await _hubContext.Clients.All.SendAsync("LoadRoom");

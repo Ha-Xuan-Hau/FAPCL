@@ -2,7 +2,7 @@
 @model IndexModel
 @inject IHttpContextAccessor HttpContextAccessor
 @{
-    ViewData["Title"] = "Welcome to the Classroom Booking System";
+    ViewData["Title"] = "Welcome to FAPCL";
     Layout = "~/Pages/Shared/_Layout.cshtml";
 }
 
@@ -147,10 +147,23 @@ h3, h2 {
         @if (HttpContextAccessor.HttpContext.Session.GetString("Role") == "Admin")
         {
             <a class="btn btn-hero" id="classroom-management" asp-page="/ClassroomManagement/Index">Classroom Management</a>
+            <a class="btn btn-hero" id="class-management" asp-page="/ClassManagement/Index">Class Management</a>
+            <a class="btn btn-hero" id="admin-news" asp-page="/NewsManagement/Index">News Management</a>
+            <a style="    margin-top: 10px;
+    margin-left: 65px;" class="btn btn-hero" id="admin-news" asp-page="/ExamScheduleManagement/Index">Exams Management</a>
         }
-        else if(HttpContextAccessor.HttpContext.Session.GetString("Role") == "User")
+        else if(HttpContextAccessor.HttpContext.Session.GetString("Role") == "Student")
         {
-            <a class="btn btn-hero" id="start-booking" asp-area="" asp-page="/BookingManagement/Index">Start Booking</a>
+            <a class="btn btn-hero" id="student-schedule" asp-area="" asp-page="/ScheduleManagement/Schedule">View Schedule</a>
+            <a class="btn btn-hero" id="student-schedule" asp-area="" asp-page="/ExamScheduleManagement/ScheduleExams">View Exam Schedule</a>
+            <a class="btn btn-hero" id="student-enroll" asp-area="" asp-page="/StudentEnroll/Index">View Schedule</a>
+            <a class="btn btn-hero" id="student-news" asp-area="" asp-page="/New/Index">View news</a>
+        }
+        else if(HttpContextAccessor.HttpContext.Session.GetString("Role") == "Teacher")
+        {
+            <a class="btn btn-hero" id="teacher-schedule" asp-area="" asp-page="/ScheduleManagement/TeacherSchedule">View Schedule</a>
+            <a class="btn btn-hero" id="teacher-schedule" asp-area="" asp-page="/ExamScheduleManagement/TeacherScheduleExams">View Exam Schedule</a>
+            <a class="btn btn-hero" id="teacher-news" asp-area="" asp-page="/New/Index">View news</a>
         }else{
             <a class="btn btn-hero" id="login" asp-area="Identity" asp-page="/Account/Login">Login</a>
         }

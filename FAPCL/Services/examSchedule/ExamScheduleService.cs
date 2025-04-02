@@ -488,7 +488,7 @@ namespace FAPCL.Services.examSchedule
             try
             {
                 var rooms = await _context.Rooms
-                    .Where(r => r.RoomTypeId == 1
+                    .Where(r => r.RoomTypeId == 2
                                 && r.Status == "Available"
                                 && (r.IsAction == true || r.IsAction == null))
                     .OrderByDescending(r => r.Capacity)
